@@ -1,0 +1,242 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { Download, Printer } from "lucide-react";
+import { toast } from "sonner";
+import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { facilities } from "@/lib/data";
+import { YEARS } from "@/lib/labels";
+import { REPORT_TYPES, buildReport, filterByYear, type ReportType } from "@/lib/reports";
+import { useStore } from "@/lib/store";
+import type { FacilityId } from "@/lib/types";
+import { slugify } from "@/lib/utils";
+
+export function ReportsView() {
+  const { state } = useStore();
+  const initialFacility: FacilityId = state.facilityId === "all" ? "harbor" : state.facilityId;
+  return <ReportsWorkspace key={`${state.facilityId}`} initialFacility={initialFacility} />;
+}
+
+function ReportsWorkspace({ initialFacility }: { initialFacility: FacilityId }) {
+  const { records } = useStore();
+  const [facilityId, setFacilityId] = useState<FacilityId>(initialFacility);
+  const [year, setYear] = useState("2026");
+  const [type, setType] = useState<ReportType>("tier2");
+  const [generated, setGenerated] = useState({ facilityId: initialFacility, year: "2026", type: "tier2" as ReportType });
+  const [generatedAt, setGeneratedAt] = useState(() => new Date());
+
+  const facility = facilities.find((item) => item.id === generated.facilityId) ?? facilities[0];
+  const dirty = facilityId !== generated.facilityId || year !== generated.year || type !== generated.type;
+
+  const table = useMemo(() => {
+    const scoped = records.filter((record) => record.chemical.facilityId === generated.facilityId);
+    return buildReport(generated.type, filterByYear(scoped, generated.year));
+  }, [records, generated]);
+
+  function generate() {
+    setGenerated({ facilityId, year, type });
+    setGeneratedAt(new Date());
+    toast.success("Report preview updated.");
+  }
+
+  function download() {
+    const escape = (value: string) => `"${value.replaceAll('"', '""')}"`;
+    const csv = [table.columns, ...table.rows].map((row) => row.map(escape).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const name = `${slugify(facility.shortName)}-${generated.type}-${generated.year}.csv`;
+    link.href = url;
+    link.download = name;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Downloaded ${name}`);
+  }
+
+  const meta = REPORT_TYPES.find((item) => item.id === generated.type);
+
+  return (
+    <div className="space-y-5">
+      <PageHeader
+        title="Regulatory reporting"
+        description="Choose a facility and build a sample excerpt. Print or download the preview. Nothing is filed from this prototype."
+      />
+
+      <div className="grid items-start gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
+        <form
+          className="no-print space-y-4 rounded-xl border border-border bg-card p-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            generate();
+          }}
+        >
+          <div className="space-y-1.5">
+            <label className="text-[13px] font-medium" htmlFor="report-facility">
+              Facility
+            </label>
+            <Select value={facilityId} onValueChange={(value) => setFacilityId(value as FacilityId)}>
+              <SelectTrigger id="report-facility">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {facilities.map((item) => (
+                  <SelectItem key={item.id} value={item.id}>
+                    {item.shortName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[13px] font-medium" htmlFor="report-year">
+              Year
+            </label>
+            <Select value={year} onValueChange={setYear}>
+              <SelectTrigger id="report-year">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All years</SelectItem>
+                {YEARS.map((item) => (
+                  <SelectItem key={item} value={String(item)}>
+                    {item}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <fieldset className="space-y-2">
+            <legend className="text-[13px] font-medium">Report</legend>
+            {REPORT_TYPES.map((item) => (
+              <label key={item.id} className="flex cursor-pointer gap-2 rounded-md border border-border px-3 py-2 text-sm has-[:checked]:border-primary has-[:checked]:bg-ok-soft">
+                <input
+                  type="radio"
+                  name="report-type"
+                  value={item.id}
+                  checked={type === item.id}
+                  onChange={() => setType(item.id)}
+                  className="mt-1"
+                />
+                <span>
+                  <span className="block">{item.label}</span>
+                  <span className="mt-0.5 block text-[12px] leading-5 text-muted-foreground">{item.summary}</span>
+                </span>
+              </label>
+            ))}
+          </fieldset>
+          {dirty ? <p className="text-[12px] text-review">Controls changed. Generate to refresh the preview.</p> : null}
+          <div className="flex gap-2">
+            <Button type="submit" className="flex-1">
+              Generate preview
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button type="button" variant="outline">
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onSelect={() => window.print()}>
+                  <Printer className="size-4" />
+                  Print
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={download}>
+                  <Download className="size-4" />
+                  Download CSV
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </form>
+
+        <article className="report-sheet overflow-hidden rounded-xl border border-border bg-white">
+          <div className="relative h-28">
+            <img src={facility.image} alt="" className="h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-[#1c1915]/55" />
+            <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 px-5 py-3 text-white sm:px-6">
+              <div>
+                <p className="text-[11px] tracking-[0.16em] text-white/75 uppercase">Northline excerpt</p>
+                <p className="text-lg font-medium">{facility.name}</p>
+              </div>
+              <p className="font-mono text-[11px] sm:text-xs">{facility.epaId}</p>
+            </div>
+          </div>
+          <div className="px-5 py-5 sm:px-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <h2 className="text-[22px] font-medium tracking-[-0.03em]">{table.title}</h2>
+                <p className="mt-1 text-sm text-muted-foreground">{facility.address}</p>
+              </div>
+              <dl className="text-sm sm:text-right">
+                <div>
+                  <dt className="text-[11px] tracking-[0.12em] text-muted-foreground uppercase">Reporting year</dt>
+                  <dd className="font-mono">{generated.year === "all" ? "All years" : generated.year}</dd>
+                </div>
+                <div className="mt-2">
+                  <dt className="text-[11px] tracking-[0.12em] text-muted-foreground uppercase">Generated</dt>
+                  <dd className="font-mono text-[12px]">
+                    {generatedAt.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+            <p className="mt-4 max-w-2xl text-sm leading-6">{meta?.summary} {table.intro}</p>
+            {table.rows.length === 0 ? (
+              <p className="mt-8 rounded-lg border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
+                No rows for this facility and year.
+              </p>
+            ) : (
+              <div className="mt-5 overflow-x-auto">
+                <table className="w-full min-w-[640px] text-left text-[13px]">
+                  <caption className="sr-only">{table.title}</caption>
+                  <thead>
+                    <tr className="border-b border-[#1c1915] text-[11px] tracking-[0.12em] text-muted-foreground uppercase">
+                      {table.columns.map((column) => (
+                        <th key={column} className="py-2 pr-3 font-medium">
+                          {column}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {table.rows.map((row, index) => (
+                      <tr key={`${row[0]}-${index}`} className="border-b border-border">
+                        {row.map((cell, cellIndex) => (
+                          <td
+                            key={`${columnKey(table.columns[cellIndex])}-${cellIndex}`}
+                            className={
+                              cellIndex === 0
+                                ? "py-2 pr-4 align-top whitespace-nowrap"
+                                : "py-2 pr-4 align-top font-mono text-[12px] whitespace-nowrap"
+                            }
+                          >
+                            {cell}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <p className="mt-6 border-t border-border pt-3 text-[12px] leading-5 text-muted-foreground">
+              Sample excerpt for demonstration. Not a regulatory submission. {table.rows.length} row{table.rows.length === 1 ? "" : "s"}.
+            </p>
+          </div>
+        </article>
+      </div>
+    </div>
+  );
+}
+
+function columnKey(value: string | undefined) {
+  return value ?? "cell";
+}

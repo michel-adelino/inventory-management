@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f4f1ea;
+  --foreground: #1c1915;
+  --card: #ffffff;
+  --card-foreground: #1c1915;
+  --popover: #ffffff;
+  --popover-foreground: #1c1915;
+  --primary: #0f6e56;
+  --primary-foreground: #f4f1ea;
+  --secondary: #efece4;
+  --secondary-foreground: #1c1915;
+  --muted: #efece4;
+  --muted-foreground: #5f5a53;
+  --accent: #efece4;
+  --accent-foreground: #1c1915;
+  --destructive: #9f1d14;
+  --border: #e6e1d6;
+  --input: #e0dbd0;
+  --ring: #0f6e56;
+  --radius: 0.7rem;
+  --review: #8a5300;
+  --review-soft: #f8f0df;
+  --danger-soft: #f8e8e5;
+  --ok-soft: #e5f3ee;
+  --sidebar: #1c1915;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-review: var(--review);
+  --color-review-soft: var(--review-soft);
+  --color-danger-soft: var(--danger-soft);
+  --color-ok-soft: var(--ok-soft);
+  --color-sidebar: var(--sidebar);
+  --font-sans: var(--font-geist-sans), "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    background: var(--background);
+  }
+
+  body {
+    min-height: 100vh;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: #d5ebe3;
+  }
+}
+
+@media print {
+  @page {
+    margin: 14mm;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .app-sidebar,
+  .app-topbar {
+    display: none !important;
+  }
+
+  .app-main {
+    padding: 0 !important;
+  }
+
+  .report-sheet {
+    border: none !important;
+    box-shadow: none !important;
+  }
+}
