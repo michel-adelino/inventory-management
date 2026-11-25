@@ -8,9 +8,10 @@ import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { facilities } from "@/lib/data";
-import { useStore } from "@/lib/store";
-import type { FacilityId } from "@/lib/types";
+import { customers, facilities } from "@/lib/data";
+import { YEARS } from "@/lib/labels";
+import { useStore, type YearScope } from "@/lib/store";
+import type { CustomerId, FacilityId } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -78,7 +79,7 @@ function WorkspaceMark() {
 
 function GlobalSearch() {
   const router = useRouter();
-  const { records } = useStore();
+  const { records, state, setFacility, setYear } = useStore();
   const [term, setTerm] = useState("");
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -90,11 +91,13 @@ function GlobalSearch() {
     if (!query) return [];
     return records
       .filter((record) => {
+        const facility = facilities.find((item) => item.id === record.chemical.facilityId);
+        if (facility?.customerId !== state.customerId) return false;
         const haystack = `${record.chemical.name} ${record.chemical.cas} ${record.chemical.manufacturer}`.toLowerCase();
         return haystack.includes(query);
       })
       .slice(0, 8);
-  }, [records, term]);
+  }, [records, state.customerId, term]);
 
   useEffect(() => {
     setActiveIndex(0);
@@ -124,6 +127,12 @@ function GlobalSearch() {
     setTerm("");
     setOpen(false);
     inputRef.current?.blur();
+  }
+
+  function openRecord(record: (typeof results)[number]) {
+    setFacility(record.chemical.facilityId);
+    setYear(record.chemical.year);
+    go(`/inventory?id=${record.chemical.id}`);
   }
 
   return (
@@ -160,7 +169,7 @@ function GlobalSearch() {
           if (event.key === "Enter") {
             event.preventDefault();
             const record = results[activeIndex];
-            if (record) go(`/inventory?id=${record.chemical.id}`);
+            if (record) openRecord(record);
           }
         }}
       />
@@ -189,7 +198,7 @@ function GlobalSearch() {
                 <button
                   type="button"
                   className="min-w-0 flex-1 text-left"
-                  onClick={() => go(`/inventory?id=${record.chemical.id}`)}
+                  onClick={() => openRecord(record)}
                 >
                   <span className="block truncate text-sm">{record.chemical.name}</span>
                   <span className="mt-0.5 block font-mono text-[11px] text-muted-foreground">
@@ -198,13 +207,17 @@ function GlobalSearch() {
                 </button>
                 <StatusBadge
                   status={record.status}
-                  revisionDate={record.latest.revisionDate}
+                  revisionDate={record.pinned?.revisionDate ?? ""}
                   reviseBy={record.reviseBy}
                 />
                 <button
                   type="button"
                   className="text-[12px] text-primary"
-                  onClick={() => go(`/sds?id=${record.document.id}`)}
+                  onClick={() => {
+                    setFacility(record.chemical.facilityId);
+                    setYear(record.chemical.year);
+                    go(`/sds?id=${record.chemical.id}`);
+                  }}
                 >
                   SDS
                 </button>
@@ -219,7 +232,8 @@ function GlobalSearch() {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { state, setFacility } = useStore();
+  const { state, setCustomer, setFacility, setYear } = useStore();
+  const customerFacilities = facilities.filter((facility) => facility.customerId === state.customerId);
 
   return (
     <div className="flex min-h-screen">
@@ -235,7 +249,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         <WorkspaceMark />
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="app-topbar no-print sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-background/90 px-3 backdrop-blur sm:gap-3 sm:px-6">
+        <header className="app-topbar no-print sticky top-0 z-30 flex flex-col gap-2 border-b border-border bg-background/90 px-3 py-2 backdrop-blur sm:px-6 lg:h-14 lg:flex-row lg:items-center lg:gap-3 lg:py-0">
+          <div className="flex min-w-0 items-center gap-2 lg:flex-1">
           <Button
             variant="outline"
             size="icon"
@@ -246,19 +261,47 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Menu className="size-4" />
           </Button>
           <GlobalSearch />
-          <Select value={state.facilityId} onValueChange={(value) => setFacility(value as FacilityId | "all")}>
-            <SelectTrigger className="w-[132px] shrink-0 sm:w-[190px]" aria-label="Facility scope">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All facilities</SelectItem>
-              {facilities.map((facility) => (
-                <SelectItem key={facility.id} value={facility.id}>
-                  {facility.shortName}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          </div>
+          <div className="grid grid-cols-3 gap-1.5 lg:flex lg:shrink-0">
+            <Select value={state.customerId} onValueChange={(value) => setCustomer(value as CustomerId)}>
+              <SelectTrigger className="w-full lg:w-[148px]" aria-label="Customer">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {customers.map((customer) => (
+                  <SelectItem key={customer.id} value={customer.id}>
+                    {customer.shortName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={state.facilityId} onValueChange={(value) => setFacility(value as FacilityId | "all")}>
+              <SelectTrigger className="w-full lg:w-[150px]" aria-label="Facility">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All facilities</SelectItem>
+                {customerFacilities.map((facility) => (
+                  <SelectItem key={facility.id} value={facility.id}>
+                    {facility.shortName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={String(state.year)} onValueChange={(value) => setYear(value === "all" ? "all" : Number(value) as YearScope)}>
+              <SelectTrigger className="w-full lg:w-[108px]" aria-label="Inventory year">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All years</SelectItem>
+                {YEARS.map((year) => (
+                  <SelectItem key={year} value={String(year)}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </header>
         <main id="content" className="app-main mx-auto w-full max-w-[1200px] flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           {children}

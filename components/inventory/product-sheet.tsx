@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { GhsIcon } from "@/components/ghs-icon";
 import { StatusBadge } from "@/components/status-badge";
+import { Button } from "@/components/ui/button";
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { facilities } from "@/lib/data";
 import { PACKAGING_IMAGE, PACKAGING_LABEL, PICTOGRAM_LABEL } from "@/lib/labels";
 import type { InventoryRecord } from "@/lib/store";
-import { formatNumber, isBelowMinimum, locationLabel, totalQuantity } from "@/lib/utils";
+import { formatDate, formatNumber, isBelowMinimum, locationLabel, locationQuantity, totalQuantity } from "@/lib/utils";
 
 const ingredientColors = ["#0f6e56", "#1c1915", "#b08968", "#8a847a", "#3e6478"];
 
@@ -15,10 +16,12 @@ export function ProductSheet({
   record,
   open,
   onOpenChange,
+  onEdit,
 }: {
   record: InventoryRecord | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onEdit?: () => void;
 }) {
   const chemical = record?.chemical;
   const facility = chemical ? facilities.find((item) => item.id === chemical.facilityId) : undefined;
@@ -56,9 +59,22 @@ export function ProductSheet({
                   </p>
                   <StatusBadge
                     status={record.status}
-                    revisionDate={record.latest.revisionDate}
+                    revisionDate={record.pinned?.revisionDate ?? ""}
                     reviseBy={record.reviseBy}
                   />
+                  {onEdit ? (
+                    <div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          onEdit();
+                        }}
+                      >
+                        Edit line
+                      </Button>
+                    </div>
+                  ) : null}
                 </div>
               </div>
 
@@ -90,10 +106,8 @@ export function ProductSheet({
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-[11px] tracking-[0.12em] text-muted-foreground uppercase">Reorder at</dt>
-                  <dd className="mt-1 font-mono">
-                    {formatNumber(chemical.reorderPoint)} {chemical.unit}
-                  </dd>
+                  <dt className="text-[11px] tracking-[0.12em] text-muted-foreground uppercase">Updated</dt>
+                  <dd className="mt-1">{formatDate(chemical.updatedAt)}</dd>
                 </div>
               </dl>
 
@@ -103,8 +117,11 @@ export function ProductSheet({
                   {chemical.locations.map((location) => (
                     <li key={locationLabel(location)} className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm">
                       <span>{locationLabel(location)}</span>
-                      <span className="font-mono text-[13px] tabular-nums">
-                        {formatNumber(location.quantity)} {chemical.unit}
+                      <span className="text-right font-mono text-[13px] tabular-nums">
+                        {formatNumber(location.containerSize)} {chemical.unit} × {location.containerCount}
+                        <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                          {formatNumber(locationQuantity(location))} {chemical.unit}
+                        </span>
                       </span>
                     </li>
                   ))}
@@ -142,11 +159,15 @@ export function ProductSheet({
               </section>
 
               <div className="rounded-lg border border-border px-3 py-3">
-                <p className="text-[13px]">
-                  Latest sheet {record.latest.label}, revised {record.latest.revisionDate}.
-                </p>
-                <Link href={`/sds?id=${chemical.sdsId}`} className="mt-2 inline-flex text-sm text-primary">
-                  Open safety data sheet
+                {record.pinned ? (
+                  <p className="text-[13px]">
+                    {chemical.year} inventory uses {record.pinned.label}, revised {formatDate(record.pinned.revisionDate)}.
+                  </p>
+                ) : (
+                  <p className="text-[13px]">No safety data sheet is on file for this {chemical.year} line.</p>
+                )}
+                <Link href={`/sds?id=${chemical.id}`} className="mt-2 inline-flex text-sm text-primary">
+                  {record.pinned ? "Open safety data sheet" : "Add a safety data sheet"}
                 </Link>
               </div>
             </SheetBody>

@@ -1,3 +1,5 @@
+export type CustomerId = "pinnacle" | "atlas-labs";
+
 export type FacilityId = "harbor" | "ridge" | "atlas";
 
 export type Packaging = "drum" | "jerrycan" | "bottle" | "sack" | "cylinder" | "tote";
@@ -24,10 +26,17 @@ export type PhysicalState = "Liquid" | "Solid" | "Gas";
 
 export type Unit = "L" | "kg" | "gal";
 
-export type SdsStatus = "current" | "review" | "outdated";
+export type SdsStatus = "current" | "review" | "outdated" | "missing";
+
+export type Customer = {
+  id: CustomerId;
+  name: string;
+  shortName: string;
+};
 
 export type Facility = {
   id: FacilityId;
+  customerId: CustomerId;
   name: string;
   shortName: string;
   city: string;
@@ -48,7 +57,8 @@ export type StockLocation = {
   building: string;
   room: string;
   cabinet: string;
-  quantity: number;
+  containerSize: number;
+  containerCount: number;
 };
 
 export type Chemical = {
@@ -66,7 +76,9 @@ export type Chemical = {
   facilityId: FacilityId;
   year: number;
   packaging: Packaging;
-  sdsId: string;
+  sdsId: string | null;
+  sdsVersionId: string | null;
+  updatedAt: string;
   reorderPoint: number;
 };
 
@@ -82,4 +94,11 @@ export type SdsDocument = {
   id: string;
   chemicalId: string;
   versions: SdsVersion[];
+};
+
+export type ActivityEntry = {
+  id: string;
+  at: string;
+  summary: string;
+  href: string;
 };

@@ -33,8 +33,9 @@ export function latestVersion(document: SdsDocument): SdsVersion {
 }
 
 /**
- * A sheet is outdated when its latest revision is older than five years.
- * The year before that date is a review window.
+ * Proposed review rule for this workspace, not a regulatory expiration.
+ * A sheet is outdated when the pinned revision is older than five years.
+ * The year before that date is the review window.
  */
 export function sdsTiming(revisionDate: string, today = new Date()) {
   const revised = startOfDay(parseISO(revisionDate));
@@ -55,12 +56,13 @@ export function sdsTiming(revisionDate: string, today = new Date()) {
 }
 
 export function statusDetail(status: SdsStatus, reviseBy: string, revisionDate: string, today = new Date()) {
+  if (status === "missing") return "No safety data sheet is on file for this inventory line.";
   if (status === "outdated") {
     const expiry = addYears(startOfDay(parseISO(revisionDate)), 5);
-    return `Outdated by ${formatDistanceStrict(expiry, startOfDay(today))}`;
+    return `Past the proposed five-year review point by ${formatDistanceStrict(expiry, startOfDay(today))}.`;
   }
-  if (status === "review") return `Crosses five years on ${reviseBy}`;
-  return `Inside the five-year window · revise by ${reviseBy}`;
+  if (status === "review") return `Inside the proposed review window. Review point ${reviseBy}.`;
+  return `Inside the proposed five-year window. Review point ${reviseBy}.`;
 }
 
 export function sectionNote(section: number, hazard: HazardClass, state: string) {

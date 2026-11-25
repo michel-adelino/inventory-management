@@ -60,6 +60,7 @@ export const STATUS_LABEL: Record<SdsStatus, string> = {
   current: "Current",
   review: "Review",
   outdated: "Outdated",
+  missing: "Missing",
 };
 
 export const YEARS = [2026, 2025, 2024, 2023];

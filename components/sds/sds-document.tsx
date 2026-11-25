@@ -20,7 +20,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { facilities } from "@/lib/data";
 import { PICTOGRAM_LABEL } from "@/lib/labels";
-import { SDS_SECTIONS, latestVersion, sectionNote, sdsTiming, statusDetail } from "@/lib/sds";
+import { STATUS_LABEL } from "@/lib/labels";
+import { SDS_SECTIONS, sectionNote, sdsTiming, statusDetail } from "@/lib/sds";
 import type { InventoryRecord } from "@/lib/store";
 import { useStore } from "@/lib/store";
 import { createId, formatDate, slugify, todayIso } from "@/lib/utils";
@@ -30,8 +31,9 @@ export function SdsDocument({ record }: { record: InventoryRecord }) {
   const [open, setOpen] = useState(false);
   const chemical = record.chemical;
   const facility = facilities.find((item) => item.id === chemical.facilityId);
-  const versions = [...record.document.versions].sort((a, b) => b.revisionDate.localeCompare(a.revisionDate));
-  const detail = statusDetail(record.status, record.reviseBy, record.latest.revisionDate);
+  const versions = [...(record.document?.versions ?? [])].sort((a, b) => b.revisionDate.localeCompare(a.revisionDate));
+  const detail = statusDetail(record.status, record.reviseBy, record.pinned?.revisionDate ?? "");
+  const pinnedLabel = record.pinned ? `${record.pinned.label}, revised ${formatDate(record.pinned.revisionDate)}` : "no sheet on file";
 
   return (
     <article className="rounded-xl border border-border bg-card">
@@ -44,25 +46,31 @@ export function SdsDocument({ record }: { record: InventoryRecord }) {
               {chemical.manufacturer} · {facility?.name}
             </p>
           </div>
-          <StatusBadge status={record.status} revisionDate={record.latest.revisionDate} reviseBy={record.reviseBy} />
+          <StatusBadge status={record.status} revisionDate={record.pinned?.revisionDate ?? ""} reviseBy={record.reviseBy} />
         </div>
-        {record.status !== "current" ? (
+        {record.status === "current" ? (
+          <p className="mt-4 text-sm text-muted-foreground">
+            {detail} This {chemical.year} line uses {pinnedLabel}.
+          </p>
+        ) : (
           <div
             className={
               record.status === "outdated"
                 ? "mt-4 flex items-start gap-2 rounded-lg bg-danger-soft px-3 py-2.5 text-sm text-destructive"
-                : "mt-4 flex items-start gap-2 rounded-lg bg-review-soft px-3 py-2.5 text-sm text-review"
+                : record.status === "missing"
+                  ? "mt-4 flex items-start gap-2 rounded-lg bg-secondary px-3 py-2.5 text-sm"
+                  : "mt-4 flex items-start gap-2 rounded-lg bg-review-soft px-3 py-2.5 text-sm text-review"
             }
           >
             <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-            <p>{detail}. Latest revision {formatDate(record.latest.revisionDate)}.</p>
+            <p>
+              {detail} This {chemical.year} line uses {pinnedLabel}.
+            </p>
           </div>
-        ) : (
-          <p className="mt-4 text-sm text-muted-foreground">{detail}.</p>
         )}
         <div className="mt-4 flex flex-wrap gap-2">
           <Button size="sm" onClick={() => setOpen(true)}>
-            Add revision
+            {record.document ? "Add revision" : "Add SDS"}
           </Button>
           <Button size="sm" variant="outline" asChild>
             <Link href={`/inventory?id=${chemical.id}`}>View in inventory</Link>
@@ -149,19 +157,23 @@ export function SdsDocument({ record }: { record: InventoryRecord }) {
 
       <div className="border-t border-border px-5 py-5 sm:px-6">
         <h3 className="text-sm font-medium">Version history</h3>
+        {versions.length === 0 ? (
+          <p className="mt-3 text-sm text-muted-foreground">No revisions are on file for this product.</p>
+        ) : null}
         <ol className="mt-4 space-y-4 border-l border-border pl-4">
           {versions.map((version) => {
             const timing = sdsTiming(version.revisionDate);
-            const isLatest = version.id === record.latest.id;
+            const pinned = version.id === record.pinned?.id;
             return (
               <li key={version.id} className="relative">
                 <span className="absolute top-1.5 -left-[21px] size-2 rounded-full bg-primary" />
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-sm font-medium">{version.label}</p>
-                  {isLatest ? <span className="text-[11px] tracking-wide text-primary uppercase">Latest</span> : null}
-                  {!isLatest ? (
+                  {pinned ? (
+                    <span className="text-[11px] tracking-wide text-primary uppercase">Pinned to {chemical.year}</span>
+                  ) : (
                     <span className="text-[11px] text-muted-foreground">{timing.status}</span>
-                  ) : null}
+                  )}
                 </div>
                 <p className="mt-0.5 font-mono text-[12px] text-muted-foreground">
                   {formatDate(version.revisionDate)} · {version.fileName}
@@ -177,16 +189,25 @@ export function SdsDocument({ record }: { record: InventoryRecord }) {
         open={open}
         onOpenChange={setOpen}
         productName={chemical.name}
+        suggestedLabel={`Rev ${versions.length + 1}`}
+        year={chemical.year}
         onSave={(label, revisionDate, note) => {
-          addVersion(record.document.id, {
+          const version = {
             id: createId("v"),
             label,
             revisionDate,
             note: note || "Revision added in the sample workspace.",
             fileName: `SDS_${slugify(chemical.name)}_${slugify(label) || "rev"}.pdf`,
+          };
+          addVersion({
+            sdsId: record.document?.id ?? createId("s"),
+            chemicalId: chemical.id,
+            year: chemical.year,
+            version,
+            summary: `Saved ${label} for ${chemical.name} on the ${chemical.year} inventory. Earlier years keep their pinned sheet.`,
           });
-          const timing = sdsTiming(latestVersion({ ...record.document, versions: [...record.document.versions, { id: "tmp", label, revisionDate, note, fileName: "" }] }).revisionDate);
-          toast.success(`${label} saved. Sheet is now ${timing.status}.`);
+          const timing = sdsTiming(revisionDate);
+          toast.success(`${label} saved for ${chemical.year}. Sheet is now ${STATUS_LABEL[timing.status]}.`);
         }}
       />
     </article>
@@ -197,14 +218,18 @@ function AddRevisionDialog({
   open,
   onOpenChange,
   productName,
+  suggestedLabel,
+  year,
   onSave,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   productName: string;
+  suggestedLabel: string;
+  year: number;
   onSave: (label: string, revisionDate: string, note: string) => void;
 }) {
-  const [label, setLabel] = useState("");
+  const [label, setLabel] = useState(suggestedLabel);
   const [revisionDate, setRevisionDate] = useState(todayIso());
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
@@ -220,7 +245,7 @@ function AddRevisionDialog({
       return;
     }
     onSave(label.trim(), revisionDate, note.trim());
-    setLabel("");
+    setLabel(suggestedLabel);
     setNote("");
     setRevisionDate(todayIso());
     setError("");
@@ -233,7 +258,7 @@ function AddRevisionDialog({
         <DialogHeader>
           <DialogTitle>Add revision</DialogTitle>
           <DialogDescription>
-            {productName}. The five-year flag follows the newest revision date.
+            {productName}. This version is pinned to the {year} inventory line. Older years keep the sheet they already had. The five-year mark is a proposed review rule.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit}>

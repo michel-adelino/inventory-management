@@ -17,60 +17,69 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { facilities } from "@/lib/data";
 import { HAZARD_CLASSES, PACKAGING, PACKAGING_LABEL, PICTOGRAM_LABEL, PICTOGRAMS, YEARS } from "@/lib/labels";
-import { useStore } from "@/lib/store";
+import { useStore, type InventoryRecord } from "@/lib/store";
 import type { FacilityId, HazardClass, Ingredient, Packaging, PhysicalState, Pictogram, SignalWord, Unit } from "@/lib/types";
-import { createId, slugify, todayIso } from "@/lib/utils";
-import { cn } from "@/lib/utils";
+import { cn, createId, slugify, todayIso } from "@/lib/utils";
 
 const CAS_RE = /^(\d{2,7}-\d{2}-\d|mixture)$/;
+const REVIEW_READY_DATE = "2022-06-15";
 
 type IngredientDraft = { name: string; cas: string; percent: string };
 
 const emptyIngredient = (): IngredientDraft => ({ name: "", cas: "", percent: "" });
 
-export function AddChemicalDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
-  const { state, addChemical } = useStore();
-  const [name, setName] = useState("");
-  const [manufacturer, setManufacturer] = useState("");
-  const [cas, setCas] = useState("");
-  const [facilityId, setFacilityId] = useState<FacilityId>(state.facilityId === "all" ? "harbor" : state.facilityId);
-  const [year, setYear] = useState(String(YEARS[0]));
-  const [hazardClass, setHazardClass] = useState<HazardClass>("Flammable liquid");
-  const [signalWord, setSignalWord] = useState<SignalWord>("Danger");
-  const [physicalState, setPhysicalState] = useState<PhysicalState>("Liquid");
-  const [packaging, setPackaging] = useState<Packaging>("drum");
-  const [unit, setUnit] = useState<Unit>("L");
-  const [quantity, setQuantity] = useState("");
-  const [reorderPoint, setReorderPoint] = useState("");
-  const [building, setBuilding] = useState("");
-  const [room, setRoom] = useState("");
-  const [cabinet, setCabinet] = useState("");
-  const [revisionDate, setRevisionDate] = useState(todayIso());
-  const [pictograms, setPictograms] = useState<Pictogram[]>(["flame"]);
-  const [ingredients, setIngredients] = useState<IngredientDraft[]>([emptyIngredient()]);
+export function AddChemicalDialog({
+  open,
+  onOpenChange,
+  record = null,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  record?: InventoryRecord | null;
+}) {
+  const { state, addChemical, updateChemical, addVersion } = useStore();
+  const chemical = record?.chemical;
+  const location = chemical?.locations[0];
+  const customerFacilities = facilities.filter((facility) => facility.customerId === state.customerId);
+  const defaultFacility = state.facilityId === "all" ? (customerFacilities[0]?.id ?? "harbor") : state.facilityId;
+  const defaultYear = state.year === "all" ? YEARS[0] : state.year;
+
+  const [name, setName] = useState(chemical?.name ?? "");
+  const [manufacturer, setManufacturer] = useState(chemical?.manufacturer ?? "");
+  const [cas, setCas] = useState(chemical?.cas ?? "");
+  const [facilityId, setFacilityId] = useState<FacilityId>(chemical?.facilityId ?? defaultFacility);
+  const [year, setYear] = useState(String(chemical?.year ?? defaultYear));
+  const [hazardClass, setHazardClass] = useState<HazardClass>(chemical?.hazardClass ?? "Flammable liquid");
+  const [signalWord, setSignalWord] = useState<SignalWord>(chemical?.signalWord ?? "Danger");
+  const [physicalState, setPhysicalState] = useState<PhysicalState>(chemical?.physicalState ?? "Liquid");
+  const [packaging, setPackaging] = useState<Packaging>(chemical?.packaging ?? "drum");
+  const [unit, setUnit] = useState<Unit>(chemical?.unit ?? "L");
+  const [containerSize, setContainerSize] = useState(location ? String(location.containerSize) : "");
+  const [containerCount, setContainerCount] = useState(location ? String(location.containerCount) : "");
+  const [reorderPoint, setReorderPoint] = useState(chemical?.reorderPoint ? String(chemical.reorderPoint) : "");
+  const [building, setBuilding] = useState(location?.building ?? "");
+  const [room, setRoom] = useState(location?.room ?? "");
+  const [cabinet, setCabinet] = useState(location?.cabinet ?? "");
+  const [revisionDate, setRevisionDate] = useState(record ? (record.pinned?.revisionDate ?? "") : REVIEW_READY_DATE);
+  const [pictograms, setPictograms] = useState<Pictogram[]>(chemical?.pictograms ?? ["flame"]);
+  const [ingredients, setIngredients] = useState<IngredientDraft[]>(
+    chemical
+      ? chemical.ingredients.map((ingredient) => ({
+          name: ingredient.name,
+          cas: ingredient.cas,
+          percent: String(ingredient.percent),
+        }))
+      : [emptyIngredient()],
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  function reset() {
-    setName("");
-    setManufacturer("");
-    setCas("");
-    setFacilityId(state.facilityId === "all" ? "harbor" : state.facilityId);
-    setYear(String(YEARS[0]));
-    setHazardClass("Flammable liquid");
-    setSignalWord("Danger");
-    setPhysicalState("Liquid");
-    setPackaging("drum");
-    setUnit("L");
-    setQuantity("");
-    setReorderPoint("");
-    setBuilding("");
-    setRoom("");
-    setCabinet("");
-    setRevisionDate(todayIso());
-    setPictograms(["flame"]);
-    setIngredients([emptyIngredient()]);
-    setErrors({});
-  }
+  const size = Number(containerSize);
+  const count = Number(containerCount);
+  const primaryTotal = Number.isFinite(size) && Number.isFinite(count) ? size * count : 0;
+  const extraTotal = (chemical?.locations.slice(1) ?? []).reduce(
+    (sum, item) => sum + item.containerSize * item.containerCount,
+    0,
+  );
 
   function togglePictogram(pictogram: Pictogram) {
     setPictograms((current) =>
@@ -88,10 +97,11 @@ export function AddChemicalDialog({ open, onOpenChange }: { open: boolean; onOpe
     if (name.trim().length < 2) nextErrors.name = "Enter the product name.";
     if (manufacturer.trim().length < 2) nextErrors.manufacturer = "Enter the manufacturer.";
     if (!CAS_RE.test(cas.trim())) nextErrors.cas = "Use a CAS number such as 67-64-1.";
-    const amount = Number(quantity);
-    if (!Number.isFinite(amount) || amount <= 0) nextErrors.quantity = "Enter a quantity above zero.";
+    if (!Number.isFinite(size) || size <= 0) nextErrors.containerSize = "Enter a container size above zero.";
+    if (!Number.isInteger(count) || count <= 0) nextErrors.containerCount = "Enter a whole container count above zero.";
     if (!building.trim() || !room.trim() || !cabinet.trim()) nextErrors.location = "Building, room, and cabinet are required.";
-    if (!revisionDate || revisionDate > todayIso()) nextErrors.revisionDate = "Revision date cannot be in the future.";
+    if (!chemical && !revisionDate) nextErrors.revisionDate = "Enter the SDS revision date.";
+    if (revisionDate && revisionDate > todayIso()) nextErrors.revisionDate = "Revision date cannot be in the future.";
     if (pictograms.length === 0) nextErrors.pictograms = "Choose at least one pictogram.";
 
     const parsedIngredients: Ingredient[] = [];
@@ -117,67 +127,85 @@ export function AddChemicalDialog({ open, onOpenChange }: { open: boolean; onOpe
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
-    const chemicalId = createId("c");
-    const sdsId = createId("s");
     const facility = facilities.find((item) => item.id === facilityId);
-    addChemical(
-      {
-        id: chemicalId,
-        name: name.trim(),
-        manufacturer: manufacturer.trim(),
-        cas: cas.trim(),
-        signalWord,
-        pictograms,
-        hazardClass,
-        physicalState,
-        ingredients: parsedIngredients,
-        unit,
-        locations: [
-          {
-            building: building.trim(),
-            room: room.trim(),
-            cabinet: cabinet.trim(),
-            quantity: amount,
-          },
-        ],
-        facilityId,
-        year: Number(year),
-        packaging,
-        sdsId,
-        reorderPoint: reorderPoint.trim() ? Number(reorderPoint) : 0,
-      },
-      {
-        id: sdsId,
-        chemicalId,
+    const primaryLocation = {
+      building: building.trim(),
+      room: room.trim(),
+      cabinet: cabinet.trim(),
+      containerSize: size,
+      containerCount: count,
+    };
+    const nextChemical = {
+      id: chemical?.id ?? createId("c"),
+      name: name.trim(),
+      manufacturer: manufacturer.trim(),
+      cas: cas.trim(),
+      signalWord,
+      pictograms,
+      hazardClass,
+      physicalState,
+      ingredients: parsedIngredients,
+      unit,
+      locations: chemical ? [primaryLocation, ...chemical.locations.slice(1)] : [primaryLocation],
+      facilityId,
+      year: Number(year),
+      packaging,
+      sdsId: chemical ? chemical.sdsId : createId("s"),
+      sdsVersionId: chemical ? chemical.sdsVersionId : null,
+      updatedAt: todayIso(),
+      reorderPoint: reorderPoint.trim() ? Number(reorderPoint) : 0,
+    };
+
+    if (!chemical) {
+      const versionId = createId("v");
+      nextChemical.sdsVersionId = versionId;
+      addChemical(nextChemical, {
+        id: nextChemical.sdsId!,
+        chemicalId: nextChemical.id,
         versions: [
           {
-            id: createId("v"),
+            id: versionId,
             label: "Rev 1",
             revisionDate,
             note: "Added from the inventory form.",
             fileName: `SDS_${slugify(name) || "product"}_Rev1.pdf`,
           },
         ],
-      },
-    );
-    toast.success(`${name.trim()} added to ${facility?.shortName ?? "inventory"}.`);
-    reset();
+      });
+      toast.success(`${nextChemical.name} added to ${facility?.shortName ?? "inventory"}.`);
+    } else {
+      updateChemical(nextChemical);
+      const pinnedDate = record?.pinned?.revisionDate ?? "";
+      if (revisionDate && revisionDate !== pinnedDate) {
+        const version = {
+          id: createId("v"),
+          label: `Rev ${(record?.document?.versions.length ?? 0) + 1}`,
+          revisionDate,
+          note: "Revision date set from the inventory form.",
+          fileName: `SDS_${slugify(name) || "product"}_rev.pdf`,
+        };
+        addVersion({
+          sdsId: nextChemical.sdsId ?? createId("s"),
+          chemicalId: nextChemical.id,
+          year: nextChemical.year,
+          version,
+          summary: `Saved ${version.label} for ${nextChemical.name} on the ${nextChemical.year} inventory. Earlier years keep their pinned sheet.`,
+        });
+      }
+      toast.success(`${nextChemical.name} updated.`);
+    }
+
     onOpenChange(false);
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        if (!next) reset();
-        onOpenChange(next);
-      }}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add chemical</DialogTitle>
+          <DialogTitle>{chemical ? "Edit chemical" : "Add chemical"}</DialogTitle>
           <DialogDescription>
-            Saves in this browser only. A revision date older than five years is flagged as soon as you add it.
+            Container size times count is the on-hand total. A revision from 2022 sits in the proposed review window.
+            That window is not a regulatory expiration.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
@@ -202,7 +230,7 @@ export function AddChemicalDialog({ open, onOpenChange }: { open: boolean; onOpe
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {facilities.map((facility) => (
+                    {customerFacilities.map((facility) => (
                       <SelectItem key={facility.id} value={facility.id}>
                         {facility.shortName}
                       </SelectItem>
@@ -287,13 +315,24 @@ export function AddChemicalDialog({ open, onOpenChange }: { open: boolean; onOpe
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Quantity" error={errors.quantity}>
+              <Field label="Container size" error={errors.containerSize}>
                 <Input
                   inputMode="decimal"
-                  value={quantity}
-                  onChange={(event) => setQuantity(event.target.value)}
-                  aria-invalid={Boolean(errors.quantity)}
+                  value={containerSize}
+                  onChange={(event) => setContainerSize(event.target.value)}
+                  aria-invalid={Boolean(errors.containerSize)}
                 />
+              </Field>
+              <Field label="Container count" error={errors.containerCount}>
+                <Input
+                  inputMode="numeric"
+                  value={containerCount}
+                  onChange={(event) => setContainerCount(event.target.value)}
+                  aria-invalid={Boolean(errors.containerCount)}
+                />
+              </Field>
+              <Field label="On hand">
+                <Input readOnly value={`${primaryTotal + extraTotal} ${unit}`} />
               </Field>
               <Field label="Reorder point">
                 <Input inputMode="decimal" value={reorderPoint} onChange={(event) => setReorderPoint(event.target.value)} placeholder="Optional" />
@@ -307,6 +346,11 @@ export function AddChemicalDialog({ open, onOpenChange }: { open: boolean; onOpe
                 <Input value={room} onChange={(event) => setRoom(event.target.value)} placeholder="Room" aria-label="Room" />
                 <Input value={cabinet} onChange={(event) => setCabinet(event.target.value)} placeholder="Cabinet" aria-label="Cabinet" />
               </div>
+              {chemical && chemical.locations.length > 1 ? (
+                <p className="mt-2 text-[12px] text-muted-foreground">
+                  {chemical.locations.length - 1} other storage position{chemical.locations.length - 1 === 1 ? "" : "s"} stay on this line.
+                </p>
+              ) : null}
               {errors.location ? <p className="mt-1 text-xs text-destructive">{errors.location}</p> : null}
             </fieldset>
 
@@ -382,13 +426,16 @@ export function AddChemicalDialog({ open, onOpenChange }: { open: boolean; onOpe
                 onChange={(event) => setRevisionDate(event.target.value)}
                 aria-invalid={Boolean(errors.revisionDate)}
               />
+              <p className="text-[12px] leading-5 text-muted-foreground">
+                {REVIEW_READY_DATE} is already inside the proposed five-year review window. Changing the date on an existing line adds a version for this inventory year only.
+              </p>
             </Field>
           </DialogBody>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">Save chemical</Button>
+            <Button type="submit">{chemical ? "Save changes" : "Save chemical"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

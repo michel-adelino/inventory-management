@@ -11,6 +11,7 @@ const styles: Record<SdsStatus, string> = {
   current: "bg-ok-soft text-primary",
   review: "bg-review-soft text-review",
   outdated: "bg-danger-soft text-destructive",
+  missing: "bg-secondary text-foreground",
 };
 
 export function StatusBadge({

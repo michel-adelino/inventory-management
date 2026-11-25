@@ -12,23 +12,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { facilities } from "@/lib/data";
 import { HAZARD_CLASSES, PACKAGING_IMAGE, YEARS } from "@/lib/labels";
-import { useStore } from "@/lib/store";
+import { useStore, type YearScope } from "@/lib/store";
 import type { FacilityId, HazardClass } from "@/lib/types";
-import { cn, formatNumber, locationLabel, totalQuantity } from "@/lib/utils";
+import { cn, formatDate, formatNumber, locationLabel, totalQuantity } from "@/lib/utils";
 
 type SortKey = "name" | "quantity" | "year";
 
 export function InventoryView() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { scoped, records, state, setFacility } = useStore();
+  const { scoped, records, state, setFacility, setYear } = useStore();
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({ key: "name", dir: "asc" });
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const query = searchParams.get("q") ?? "";
-  const year = searchParams.get("year") ?? "all";
   const hazard = searchParams.get("hazard") ?? "all";
   const selectedId = searchParams.get("id");
+  const customerFacilities = facilities.filter((facility) => facility.customerId === state.customerId);
 
   function patch(next: Record<string, string | null>) {
     const params = new URLSearchParams(searchParams.toString());
@@ -44,7 +45,6 @@ export function InventoryView() {
     const needle = query.trim().toLowerCase();
     return scoped
       .filter((record) => {
-        if (year !== "all" && record.chemical.year !== Number(year)) return false;
         if (hazard !== "all" && record.chemical.hazardClass !== hazard) return false;
         if (!needle) return true;
         const haystack = `${record.chemical.name} ${record.chemical.cas} ${record.chemical.manufacturer}`.toLowerCase();
@@ -56,9 +56,10 @@ export function InventoryView() {
         if (sort.key === "year") return (a.chemical.year - b.chemical.year) * direction;
         return (totalQuantity(a.chemical) - totalQuantity(b.chemical)) * direction;
       });
-  }, [scoped, query, year, hazard, sort]);
+  }, [scoped, query, hazard, sort]);
 
   const selected = records.find((record) => record.chemical.id === selectedId) ?? null;
+  const editing = records.find((record) => record.chemical.id === editingId) ?? null;
 
   function toggleSort(key: SortKey) {
     setSort((current) =>
@@ -70,7 +71,7 @@ export function InventoryView() {
     <div className="space-y-5">
       <PageHeader
         title="Chemical inventory"
-        description="Product identity, on-hand quantity, storage location, and composition. Facility scope follows the menu at the top of the screen."
+        description="Container size times count is the on-hand quantity. Facility and year follow the controls at the top of the screen."
         action={
           <Button onClick={() => setAdding(true)}>
             <Plus className="size-4" />
@@ -96,14 +97,17 @@ export function InventoryView() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All facilities</SelectItem>
-            {facilities.map((facility) => (
+            {customerFacilities.map((facility) => (
               <SelectItem key={facility.id} value={facility.id}>
                 {facility.shortName}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <Select value={year} onValueChange={(value) => patch({ year: value === "all" ? null : value })}>
+        <Select
+          value={String(state.year)}
+          onValueChange={(value) => setYear(value === "all" ? "all" : (Number(value) as YearScope))}
+        >
           <SelectTrigger aria-label="Year">
             <SelectValue />
           </SelectTrigger>
@@ -161,7 +165,8 @@ export function InventoryView() {
             className="mt-4"
             onClick={() => {
               setFacility("all");
-              patch({ q: null, year: null, hazard: null, id: null });
+              setYear("all");
+              patch({ q: null, hazard: null, id: null });
             }}
           >
             Clear filters
@@ -186,6 +191,7 @@ export function InventoryView() {
                     <SortButton label="On hand" active={sort.key === "quantity"} dir={sort.dir} onClick={() => toggleSort("quantity")} />
                   </TableHead>
                   <TableHead>Location</TableHead>
+                  <TableHead>Updated</TableHead>
                   <TableHead>SDS</TableHead>
                 </TableRow>
               </TableHeader>
@@ -229,10 +235,11 @@ export function InventoryView() {
                       <TableCell className="max-w-[220px] truncate text-[13px] text-muted-foreground">
                         {locationLabel(record.chemical.locations[0])}
                       </TableCell>
+                      <TableCell className="text-[13px] text-muted-foreground">{formatDate(record.chemical.updatedAt)}</TableCell>
                       <TableCell>
                         <StatusBadge
                           status={record.status}
-                          revisionDate={record.latest.revisionDate}
+                          revisionDate={record.pinned?.revisionDate ?? ""}
                           reviseBy={record.reviseBy}
                         />
                       </TableCell>
@@ -265,7 +272,7 @@ export function InventoryView() {
                       </span>
                       <StatusBadge
                         status={record.status}
-                        revisionDate={record.latest.revisionDate}
+                        revisionDate={record.pinned?.revisionDate ?? ""}
                         reviseBy={record.reviseBy}
                       />
                     </span>
@@ -277,8 +284,25 @@ export function InventoryView() {
         </>
       )}
 
-      <ProductSheet record={selected} open={Boolean(selected)} onOpenChange={(open) => !open && patch({ id: null })} />
-      <AddChemicalDialog open={adding} onOpenChange={setAdding} />
+      <ProductSheet
+        record={selected}
+        open={Boolean(selected)}
+        onOpenChange={(open) => !open && patch({ id: null })}
+        onEdit={() => {
+          if (selected) setEditingId(selected.chemical.id);
+        }}
+      />
+      {adding ? <AddChemicalDialog open onOpenChange={setAdding} /> : null}
+      {editing ? (
+        <AddChemicalDialog
+          key={editing.chemical.id}
+          open
+          record={editing}
+          onOpenChange={(open) => {
+            if (!open) setEditingId(null);
+          }}
+        />
+      ) : null}
     </div>
   );
 }

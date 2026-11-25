@@ -12,37 +12,30 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { facilities } from "@/lib/data";
+import { customers, facilities } from "@/lib/data";
 import { YEARS } from "@/lib/labels";
-import { REPORT_TYPES, buildReport, filterByYear, type ReportType } from "@/lib/reports";
-import { useStore } from "@/lib/store";
+import { REPORT_TYPES, buildReport, type ReportType } from "@/lib/reports";
+import { useStore, type YearScope } from "@/lib/store";
 import type { FacilityId } from "@/lib/types";
 import { slugify } from "@/lib/utils";
 
 export function ReportsView() {
-  const { state } = useStore();
-  const initialFacility: FacilityId = state.facilityId === "all" ? "harbor" : state.facilityId;
-  return <ReportsWorkspace key={`${state.facilityId}`} initialFacility={initialFacility} />;
-}
-
-function ReportsWorkspace({ initialFacility }: { initialFacility: FacilityId }) {
-  const { records } = useStore();
-  const [facilityId, setFacilityId] = useState<FacilityId>(initialFacility);
-  const [year, setYear] = useState("2026");
-  const [type, setType] = useState<ReportType>("tier2");
-  const [generated, setGenerated] = useState({ facilityId: initialFacility, year: "2026", type: "tier2" as ReportType });
+  const { scoped, state, setFacility, setYear } = useStore();
+  const [type, setType] = useState<ReportType>("hazmat");
+  const [generatedType, setGeneratedType] = useState<ReportType>("hazmat");
   const [generatedAt, setGeneratedAt] = useState(() => new Date());
 
-  const facility = facilities.find((item) => item.id === generated.facilityId) ?? facilities[0];
-  const dirty = facilityId !== generated.facilityId || year !== generated.year || type !== generated.type;
+  const customer = customers.find((item) => item.id === state.customerId);
+  const customerFacilities = facilities.filter((item) => item.customerId === state.customerId);
+  const facility =
+    facilities.find((item) => item.id === state.facilityId) ?? customerFacilities[0] ?? facilities[0];
+  const dirty = type !== generatedType;
+  const yearLabel = state.year === "all" ? "All years" : String(state.year);
 
-  const table = useMemo(() => {
-    const scoped = records.filter((record) => record.chemical.facilityId === generated.facilityId);
-    return buildReport(generated.type, filterByYear(scoped, generated.year));
-  }, [records, generated]);
+  const table = useMemo(() => buildReport(generatedType, scoped), [generatedType, scoped]);
 
   function generate() {
-    setGenerated({ facilityId, year, type });
+    setGeneratedType(type);
     setGeneratedAt(new Date());
     toast.success("Report preview updated.");
   }
@@ -53,7 +46,8 @@ function ReportsWorkspace({ initialFacility }: { initialFacility: FacilityId }) 
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    const name = `${slugify(facility.shortName)}-${generated.type}-${generated.year}.csv`;
+    const scopeName = state.facilityId === "all" ? customer?.shortName ?? "customer" : facility.shortName;
+    const name = `${slugify(scopeName)}-${generatedType}-${state.year}.csv`;
     link.href = url;
     link.download = name;
     link.click();
@@ -61,13 +55,14 @@ function ReportsWorkspace({ initialFacility }: { initialFacility: FacilityId }) 
     toast.success(`Downloaded ${name}`);
   }
 
-  const meta = REPORT_TYPES.find((item) => item.id === generated.type);
+  const meta = REPORT_TYPES.find((item) => item.id === generatedType);
+  const heading = state.facilityId === "all" ? `${customer?.name ?? "Customer"} · all facilities` : facility.name;
 
   return (
     <div className="space-y-5">
       <PageHeader
         title="Regulatory reporting"
-        description="Choose a facility and build a sample excerpt. Print or download the preview. Nothing is filed from this prototype."
+        description="Sample excerpts from the same inventory lines. Print or download the preview. Nothing here is an official EPA or OSHA filing."
       />
 
       <div className="grid items-start gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
@@ -82,12 +77,13 @@ function ReportsWorkspace({ initialFacility }: { initialFacility: FacilityId }) 
             <label className="text-[13px] font-medium" htmlFor="report-facility">
               Facility
             </label>
-            <Select value={facilityId} onValueChange={(value) => setFacilityId(value as FacilityId)}>
+            <Select value={state.facilityId} onValueChange={(value) => setFacility(value as FacilityId | "all")}>
               <SelectTrigger id="report-facility">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {facilities.map((item) => (
+                <SelectItem value="all">All facilities</SelectItem>
+                {customerFacilities.map((item) => (
                   <SelectItem key={item.id} value={item.id}>
                     {item.shortName}
                   </SelectItem>
@@ -99,7 +95,10 @@ function ReportsWorkspace({ initialFacility }: { initialFacility: FacilityId }) 
             <label className="text-[13px] font-medium" htmlFor="report-year">
               Year
             </label>
-            <Select value={year} onValueChange={setYear}>
+            <Select
+              value={String(state.year)}
+              onValueChange={(value) => setYear(value === "all" ? "all" : (Number(value) as YearScope))}
+            >
               <SelectTrigger id="report-year">
                 <SelectValue />
               </SelectTrigger>
@@ -132,7 +131,7 @@ function ReportsWorkspace({ initialFacility }: { initialFacility: FacilityId }) 
               </label>
             ))}
           </fieldset>
-          {dirty ? <p className="text-[12px] text-review">Controls changed. Generate to refresh the preview.</p> : null}
+          {dirty ? <p className="text-[12px] text-review">Report type changed. Generate to refresh the preview.</p> : null}
           <div className="flex gap-2">
             <Button type="submit" className="flex-1">
               Generate preview
@@ -163,8 +162,8 @@ function ReportsWorkspace({ initialFacility }: { initialFacility: FacilityId }) 
             <div className="absolute inset-0 bg-[#1c1915]/55" />
             <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 px-5 py-3 text-white sm:px-6">
               <div>
-                <p className="text-[11px] tracking-[0.16em] text-white/75 uppercase">Northline excerpt</p>
-                <p className="text-lg font-medium">{facility.name}</p>
+                <p className="text-[11px] tracking-[0.16em] text-white/75 uppercase">Sample excerpt</p>
+                <p className="text-lg font-medium">{heading}</p>
               </div>
               <p className="font-mono text-[11px] sm:text-xs">{facility.epaId}</p>
             </div>
@@ -173,12 +172,15 @@ function ReportsWorkspace({ initialFacility }: { initialFacility: FacilityId }) 
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <h2 className="text-[22px] font-medium tracking-[-0.03em]">{table.title}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">{facility.address}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {customer?.name}
+                  {state.facilityId === "all" ? "" : ` · ${facility.address}`}
+                </p>
               </div>
               <dl className="text-sm sm:text-right">
                 <div>
                   <dt className="text-[11px] tracking-[0.12em] text-muted-foreground uppercase">Reporting year</dt>
-                  <dd className="font-mono">{generated.year === "all" ? "All years" : generated.year}</dd>
+                  <dd className="font-mono">{yearLabel}</dd>
                 </div>
                 <div className="mt-2">
                   <dt className="text-[11px] tracking-[0.12em] text-muted-foreground uppercase">Generated</dt>

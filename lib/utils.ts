@@ -26,8 +26,19 @@ export function todayIso() {
   return `${now.getFullYear()}-${month}-${day}`;
 }
 
+export function locationQuantity(location: StockLocation) {
+  return location.containerSize * location.containerCount;
+}
+
 export function totalQuantity(chemical: Chemical) {
-  return chemical.locations.reduce((sum, location) => sum + location.quantity, 0);
+  return chemical.locations.reduce((sum, location) => sum + locationQuantity(location), 0);
+}
+
+export function isIncomplete(chemical: Chemical) {
+  if (!chemical.sdsId || !chemical.sdsVersionId) return true;
+  if (chemical.ingredients.length === 0) return true;
+  if (chemical.locations.length === 0) return true;
+  return chemical.locations.some((location) => location.containerSize <= 0 || location.containerCount <= 0);
 }
 
 export function isBelowMinimum(chemical: Chemical) {

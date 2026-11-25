@@ -50,14 +50,18 @@ export function SdsView() {
     });
   }, [scoped, query, status]);
 
-  const explicit = filtered.find((record) => record.document.id === selectedId) ?? null;
+  const explicit =
+    filtered.find(
+      (record) =>
+        record.chemical.id === selectedId || record.document?.id === selectedId || record.chemical.sdsId === selectedId,
+    ) ?? null;
   const desktopRecord = explicit ?? filtered[0] ?? null;
 
   return (
     <div className="space-y-5">
       <PageHeader
         title="Safety data sheets"
-        description="Each product keeps its revision history. A sheet is outdated when the latest revision is older than five years, and marked for review during the year before that."
+        description="Each inventory year keeps the SDS version it was filed with. The five-year mark is a proposed review rule, not a regulatory expiration."
       />
 
       <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_200px]">
@@ -80,6 +84,7 @@ export function SdsView() {
             <SelectItem value="current">Current</SelectItem>
             <SelectItem value="review">Needs review</SelectItem>
             <SelectItem value="outdated">Outdated</SelectItem>
+            <SelectItem value="missing">Missing</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -96,12 +101,12 @@ export function SdsView() {
               <ul>
                 {filtered.map((record) => {
                   const facility = facilities.find((item) => item.id === record.chemical.facilityId);
-                  const active = desktopRecord?.document.id === record.document.id;
+                  const active = desktopRecord?.chemical.id === record.chemical.id;
                   return (
-                    <li key={record.document.id}>
+                    <li key={record.chemical.id}>
                       <button
                         type="button"
-                        onClick={() => patch({ id: record.document.id })}
+                        onClick={() => patch({ id: record.chemical.id })}
                         className={cn(
                           "flex w-full items-start justify-between gap-3 border-b border-border px-3 py-3 text-left",
                           active && "bg-secondary",
@@ -110,12 +115,13 @@ export function SdsView() {
                         <span className="min-w-0">
                           <span className="block truncate text-sm">{record.chemical.name}</span>
                           <span className="mt-0.5 block text-[12px] text-muted-foreground">
-                            {facility?.shortName} · {formatDate(record.latest.revisionDate)}
+                            {facility?.shortName} · {record.chemical.year}
+                            {record.pinned ? ` · ${formatDate(record.pinned.revisionDate)}` : " · No sheet"}
                           </span>
                         </span>
                         <StatusBadge
                           status={record.status}
-                          revisionDate={record.latest.revisionDate}
+                          revisionDate={record.pinned?.revisionDate ?? ""}
                           reviseBy={record.reviseBy}
                         />
                       </button>
