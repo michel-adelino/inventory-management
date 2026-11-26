@@ -9,7 +9,7 @@ export function ScrollArea({ className, children, ...props }: ComponentProps<typ
     <ScrollAreaPrimitive.Root className={cn("relative overflow-hidden", className)} {...props}>
       <ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit]">{children}</ScrollAreaPrimitive.Viewport>
       <ScrollAreaPrimitive.Scrollbar orientation="vertical" className="flex w-2.5 touch-none p-0.5">
-        <ScrollAreaPrimitive.Thumb className="relative flex-1 rounded-full bg-[#d9d3c7]" />
+        <ScrollAreaPrimitive.Thumb className="relative flex-1 rounded-full bg-[#cbd5e1]" />
       </ScrollAreaPrimitive.Scrollbar>
     </ScrollAreaPrimitive.Root>
   );

@@ -8,7 +8,7 @@ import { SdsDocument } from "@/components/sds/sds-document";
 import { StatusBadge } from "@/components/status-badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sheet, SheetBody, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetBody, SheetClose, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { facilities } from "@/lib/data";
 import { useStore } from "@/lib/store";
 import { cn, formatDate } from "@/lib/utils";
@@ -23,7 +23,7 @@ export function SdsView() {
   const selectedId = searchParams.get("id");
 
   useEffect(() => {
-    const media = window.matchMedia("(min-width: 1024px)");
+    const media = window.matchMedia("(min-width: 1280px)");
     const update = () => setIsLarge(media.matches);
     update();
     media.addEventListener("change", update);
@@ -50,11 +50,12 @@ export function SdsView() {
     });
   }, [scoped, query, status]);
 
-  const explicit =
-    filtered.find(
-      (record) =>
-        record.chemical.id === selectedId || record.document?.id === selectedId || record.chemical.sdsId === selectedId,
-    ) ?? null;
+  const explicit = selectedId
+    ? (filtered.find(
+        (record) =>
+          record.chemical.id === selectedId || record.document?.id === selectedId || record.chemical.sdsId === selectedId,
+      ) ?? null)
+    : null;
   const desktopRecord = explicit ?? filtered[0] ?? null;
 
   return (
@@ -89,8 +90,8 @@ export function SdsView() {
         </Select>
       </div>
 
-      <div className="grid items-start gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <div className="overflow-hidden rounded-xl border border-border bg-card">
+      <div className="grid items-start gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-card">
           <div className="border-b border-border px-3 py-2 text-[12px] text-muted-foreground">
             {filtered.length} sheet{filtered.length === 1 ? "" : "s"}
           </div>
@@ -133,7 +134,7 @@ export function SdsView() {
           )}
         </div>
 
-        <div className="hidden lg:block">
+        <div className="hidden xl:block">
           {desktopRecord ? (
             <SdsDocument record={desktopRecord} />
           ) : (
@@ -145,8 +146,13 @@ export function SdsView() {
       </div>
 
       <Sheet open={Boolean(explicit) && isLarge === false} onOpenChange={(open) => !open && patch({ id: null })}>
-        <SheetContent className="sm:max-w-2xl">
-          <SheetTitle className="sr-only">{explicit?.chemical.name ?? "Safety data sheet"}</SheetTitle>
+        <SheetContent className="w-full sm:max-w-2xl">
+          <SheetHeader className="flex flex-row items-center justify-between gap-3">
+            <SheetTitle className="min-w-0 truncate">{explicit?.chemical.name ?? "Safety data sheet"}</SheetTitle>
+            <SheetClose className="mr-8 shrink-0 rounded-md border border-border px-2.5 py-1 text-sm hover:bg-secondary">
+              Close
+            </SheetClose>
+          </SheetHeader>
           <SheetBody className="px-0 py-0">
             {explicit ? <SdsDocument record={explicit} /> : null}
           </SheetBody>

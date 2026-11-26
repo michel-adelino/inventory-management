@@ -12,7 +12,7 @@ export function SelectTrigger({ className, children, ...props }: ComponentProps<
   return (
     <SelectPrimitive.Trigger
       className={cn(
-        "flex h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-card px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/30 disabled:opacity-50 data-[placeholder]:text-muted-foreground",
+        "flex h-9 w-full min-w-0 items-center justify-between gap-2 overflow-hidden rounded-md border border-input bg-card px-3 text-sm whitespace-nowrap text-foreground outline-none focus:ring-2 focus:ring-ring/30 disabled:opacity-50 data-[placeholder]:text-muted-foreground",
         className,
       )}
       {...props}

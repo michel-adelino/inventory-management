@@ -10,7 +10,7 @@ import { PACKAGING_IMAGE, PACKAGING_LABEL, PICTOGRAM_LABEL } from "@/lib/labels"
 import type { InventoryRecord } from "@/lib/store";
 import { formatDate, formatNumber, isBelowMinimum, locationLabel, locationQuantity, totalQuantity } from "@/lib/utils";
 
-const ingredientColors = ["#0f6e56", "#1c1915", "#b08968", "#8a847a", "#3e6478"];
+const ingredientColors = ["#2563eb", "#0f172a", "#64748b", "#047857", "#b45309"];
 
 export function ProductSheet({
   record,
@@ -48,8 +48,8 @@ export function ProductSheet({
                   <p
                     className={
                       chemical.signalWord === "Danger"
-                        ? "inline-flex rounded border border-destructive px-2 py-0.5 text-[12px] font-semibold tracking-[0.14em] text-destructive uppercase"
-                        : "inline-flex rounded border border-review px-2 py-0.5 text-[12px] font-semibold tracking-[0.14em] text-review uppercase"
+                        ? "inline-flex rounded border border-destructive px-2 py-0.5 text-[12px] font-semibold tracking-[0.08em] text-destructive uppercase"
+                        : "inline-flex rounded border border-review px-2 py-0.5 text-[12px] font-semibold tracking-[0.08em] text-review uppercase"
                     }
                   >
                     {chemical.signalWord}
@@ -89,15 +89,15 @@ export function ProductSheet({
 
               <dl className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <dt className="text-[11px] tracking-[0.12em] text-muted-foreground uppercase">CAS</dt>
+                  <dt className="text-[11px] tracking-[0.08em] text-muted-foreground uppercase">CAS</dt>
                   <dd className="mt-1 font-mono">{chemical.cas}</dd>
                 </div>
                 <div>
-                  <dt className="text-[11px] tracking-[0.12em] text-muted-foreground uppercase">Inventory year</dt>
+                  <dt className="text-[11px] tracking-[0.08em] text-muted-foreground uppercase">Inventory year</dt>
                   <dd className="mt-1 font-mono">{chemical.year}</dd>
                 </div>
                 <div>
-                  <dt className="text-[11px] tracking-[0.12em] text-muted-foreground uppercase">On hand</dt>
+                  <dt className="text-[11px] tracking-[0.08em] text-muted-foreground uppercase">On hand</dt>
                   <dd className="mt-1 font-mono">
                     {formatNumber(totalQuantity(chemical))} {chemical.unit}
                     {isBelowMinimum(chemical) ? (
@@ -106,7 +106,7 @@ export function ProductSheet({
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-[11px] tracking-[0.12em] text-muted-foreground uppercase">Updated</dt>
+                  <dt className="text-[11px] tracking-[0.08em] text-muted-foreground uppercase">Updated</dt>
                   <dd className="mt-1">{formatDate(chemical.updatedAt)}</dd>
                 </div>
               </dl>

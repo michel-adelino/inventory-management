@@ -15,11 +15,11 @@ export type ReportPdfModel = {
   generatedLabel: string;
 };
 
-const ink = "#1C1915";
-const muted = "#5F5A53";
-const line = "#E4DDD0";
-const paper = "#F7F4EE";
-const accent = "#0F6E56";
+const ink = "#0F172A";
+const muted = "#64748B";
+const line = "#E6EAF2";
+const paper = "#F5F7FB";
+const accent = "#2563EB";
 
 const styles = StyleSheet.create({
   page: {
@@ -54,20 +54,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   brand: {
-    color: "#F6F3EC",
+    color: "#F8FAFC",
     fontSize: 13,
     fontFamily: "Helvetica-Bold",
     letterSpacing: 0.2,
   },
   kicker: {
-    color: "#C8C2B6",
+    color: "#CBD5E1",
     fontSize: 8,
     letterSpacing: 1.4,
     textTransform: "uppercase",
   },
   facility: {
     marginTop: 8,
-    color: "#F6F3EC",
+    color: "#F8FAFC",
     fontSize: 12,
     fontFamily: "Helvetica-Bold",
   },
@@ -77,12 +77,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   bandMuted: {
-    color: "#C8C2B6",
+    color: "#CBD5E1",
     fontSize: 8,
     maxWidth: 380,
   },
   epa: {
-    color: "#F6F3EC",
+    color: "#F8FAFC",
     fontSize: 8,
     fontFamily: "Courier",
   },
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   rowAlt: {
-    backgroundColor: "#F1EBE1",
+    backgroundColor: "#F1F5F9",
   },
   slot: {
     paddingRight: 8,

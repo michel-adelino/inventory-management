@@ -10,8 +10,8 @@ export function Toaster() {
       toastOptions={{
         style: {
           background: "#ffffff",
-          border: "1px solid #e6e1d6",
-          color: "#1c1915",
+          border: "1px solid #e6eaf2",
+          color: "#0f172a",
           boxShadow: "0 10px 30px rgba(28, 25, 21, 0.08)",
         },
       }}

@@ -24,14 +24,13 @@ const NAV = [
 function Brand() {
   return (
     <Link href="/" className="block px-5 pt-6 pb-5">
-      <p className="text-[18px] font-medium tracking-[-0.03em] text-[#f6f3ec]">Northline</p>
-      <p className="mt-1 text-[12px] text-[#a39e94]">Chemical inventory</p>
-      <span className="mt-4 block h-px w-8 bg-primary" />
+      <p className="text-[18px] font-semibold tracking-[-0.02em] text-foreground">Northline</p>
+      <p className="mt-1 text-[12px] text-muted-foreground">Chemical inventory</p>
     </Link>
   );
 }
 
-function NavLinks({ onNavigate, tone = "dark" }: { onNavigate?: () => void; tone?: "dark" }) {
+function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   return (
     <nav className="flex flex-col gap-1 px-3" aria-label="Primary">
@@ -45,11 +44,10 @@ function NavLinks({ onNavigate, tone = "dark" }: { onNavigate?: () => void; tone
             onClick={onNavigate}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-[14px]",
+              "flex items-center gap-3 rounded-lg px-3 py-2 text-[14px] font-medium",
               active
-                ? "bg-white/10 text-[#f6f3ec] shadow-[inset_2px_0_0_#0f6e56]"
-                : "text-[#c8c2b6] hover:bg-white/5 hover:text-[#f6f3ec]",
-              tone === "dark" && "",
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-secondary hover:text-foreground",
             )}
           >
             <Icon className="size-4" />
@@ -63,14 +61,14 @@ function NavLinks({ onNavigate, tone = "dark" }: { onNavigate?: () => void; tone
 
 function WorkspaceMark() {
   return (
-    <div className="mt-auto border-t border-white/10 px-4 py-4">
+    <div className="mt-auto border-t border-border px-4 py-4">
       <div className="flex items-center gap-3">
-        <span className="grid size-8 place-items-center rounded-full bg-white/10 text-[11px] font-medium text-[#f6f3ec]">
+        <span className="grid size-8 place-items-center rounded-full bg-primary/10 text-[11px] font-medium text-primary">
           EH
         </span>
         <div>
-          <p className="text-[13px] text-[#f6f3ec]">Plant EHS</p>
-          <p className="text-[11px] text-[#a39e94]">Sample workspace</p>
+          <p className="text-[13px] font-medium text-foreground">Plant EHS</p>
+          <p className="text-[11px] text-muted-foreground">Sample workspace</p>
         </div>
       </div>
     </div>
@@ -243,13 +241,13 @@ export function AppShell({ children }: { children: ReactNode }) {
       >
         Skip to content
       </a>
-      <aside className="app-sidebar no-print sticky top-0 hidden h-screen w-[240px] shrink-0 flex-col bg-sidebar lg:flex">
+      <aside className="app-sidebar no-print sticky top-0 hidden h-screen w-[240px] shrink-0 flex-col border-r border-border bg-card lg:flex">
         <Brand />
         <NavLinks />
         <WorkspaceMark />
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="app-topbar no-print sticky top-0 z-30 flex flex-col gap-2 border-b border-border bg-background/90 px-3 py-2 backdrop-blur sm:px-6 lg:h-14 lg:flex-row lg:items-center lg:gap-3 lg:py-0">
+        <header className="app-topbar no-print sticky top-0 z-30 flex flex-col gap-2 border-b border-border bg-card/95 px-3 py-2 backdrop-blur sm:px-6 lg:h-14 lg:flex-row lg:items-center lg:gap-3 lg:py-0">
           <div className="flex min-w-0 items-center gap-2 lg:flex-1">
           <Button
             variant="outline"
@@ -308,7 +306,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </main>
       </div>
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-        <SheetContent side="left" className="bg-sidebar text-[#f6f3ec] [&>button]:text-[#f6f3ec]">
+        <SheetContent side="left" className="bg-card text-foreground">
           <SheetTitle className="sr-only">Menu</SheetTitle>
           <Brand />
           <NavLinks onNavigate={() => setMenuOpen(false)} />

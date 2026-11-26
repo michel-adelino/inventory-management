@@ -90,25 +90,25 @@ export function DashboardView() {
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {stats.map((stat) => (
-          <article key={stat.label} className="rounded-xl border border-border bg-card px-4 py-4">
-            <p className="text-[11px] font-medium tracking-[0.14em] text-muted-foreground uppercase">{stat.label}</p>
-            <p className="mt-3 font-mono text-[32px] leading-none tracking-tight">{stat.value}</p>
+          <article key={stat.label} className="rounded-xl border border-border bg-card shadow-card px-4 py-4">
+            <p className="text-[11px] font-medium tracking-[0.08em] text-muted-foreground uppercase">{stat.label}</p>
+            <p className="mt-3 text-[32px] leading-none font-semibold tracking-[-0.03em]">{stat.value}</p>
             <p className="mt-3 text-[13px] leading-5 text-muted-foreground">{stat.detail}</p>
           </article>
         ))}
       </section>
 
       <section className="grid gap-4 lg:grid-cols-5">
-        <article className="rounded-xl border border-border bg-card p-4 lg:col-span-3">
+        <article className="rounded-xl border border-border bg-card shadow-card p-4 lg:col-span-3">
           <div className="mb-3 flex items-baseline justify-between gap-3">
-            <h2 className="text-[15px] font-medium tracking-tight">Inventory by hazard class</h2>
+            <h2 className="text-[15px] font-semibold tracking-tight">Inventory by hazard class</h2>
             <p className="text-[12px] text-muted-foreground">Primary class</p>
           </div>
           <HazardChart data={chart} />
         </article>
-        <article className="rounded-xl border border-border bg-card p-4 lg:col-span-2">
+        <article className="rounded-xl border border-border bg-card shadow-card p-4 lg:col-span-2">
           <div className="mb-3 flex items-baseline justify-between gap-3">
-            <h2 className="text-[15px] font-medium tracking-tight">Upcoming reviews</h2>
+            <h2 className="text-[15px] font-semibold tracking-tight">Upcoming reviews</h2>
             <Link href="/sds?status=review" className="text-[12px] text-primary">
               View library
             </Link>
@@ -160,15 +160,15 @@ export function DashboardView() {
               onClick={() => setFacility(item.id)}
               aria-pressed={active}
               className={cn(
-                "overflow-hidden rounded-xl border border-border bg-card text-left",
+                "overflow-hidden rounded-xl border border-border bg-card shadow-card text-left",
                 active && "ring-2 ring-primary",
               )}
             >
               <div className="relative h-36">
                 <img src={item.image} alt="" className="h-full w-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#1c1915]/75 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a]/75 to-transparent" />
                 <div className="absolute right-3 bottom-3 left-3 text-white">
-                  <p className="text-[11px] tracking-[0.12em] text-white/75 uppercase">{item.kind}</p>
+                  <p className="text-[11px] tracking-[0.08em] text-white/75 uppercase">{item.kind}</p>
                   <p className="text-[15px] font-medium">{item.name}</p>
                 </div>
               </div>
@@ -196,9 +196,9 @@ export function DashboardView() {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <article className="rounded-xl border border-border bg-card">
+        <article className="rounded-xl border border-border bg-card shadow-card">
           <div className="flex items-baseline justify-between gap-3 px-4 py-3">
-            <h2 className="text-[15px] font-medium tracking-tight">Incomplete lines</h2>
+            <h2 className="text-[15px] font-semibold tracking-tight">Incomplete lines</h2>
             <Link href="/inventory" className="text-[12px] text-primary">
               Open inventory
             </Link>
@@ -210,7 +210,7 @@ export function DashboardView() {
               <table className="w-full text-sm">
                 <caption className="sr-only">Inventory lines that need attention</caption>
                 <thead>
-                  <tr className="border-y border-border text-left text-[11px] tracking-[0.12em] text-muted-foreground uppercase">
+                  <tr className="border-y border-border text-left text-[11px] tracking-[0.08em] text-muted-foreground uppercase">
                     <th className="px-4 py-2 font-medium">Product</th>
                     <th className="px-3 py-2 font-medium">On hand</th>
                     <th className="px-4 py-2 font-medium">Issue</th>
@@ -236,9 +236,9 @@ export function DashboardView() {
           )}
         </article>
 
-        <article className="rounded-xl border border-border bg-card">
+        <article className="rounded-xl border border-border bg-card shadow-card">
           <div className="px-4 py-3">
-            <h2 className="text-[15px] font-medium tracking-tight">Recent activity</h2>
+            <h2 className="text-[15px] font-semibold tracking-tight">Recent activity</h2>
           </div>
           {state.activity.length === 0 ? (
             <p className="px-4 pb-6 text-sm text-muted-foreground">Adds, edits, and new SDS versions will show up here.</p>

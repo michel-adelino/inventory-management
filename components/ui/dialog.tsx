@@ -12,7 +12,7 @@ export const DialogClose = DialogPrimitive.Close;
 export function DialogContent({ className, children, ...props }: ComponentProps<typeof DialogPrimitive.Content>) {
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[#1c1915]/40" />
+      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[#0f172a]/40" />
       <DialogPrimitive.Content
         className={cn(
           "fixed top-1/2 left-1/2 z-50 flex max-h-[min(880px,calc(100vh-2rem))] w-[calc(100%-1.5rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl",

@@ -174,7 +174,7 @@ export function InventoryView() {
         </div>
       ) : (
         <>
-          <div className="hidden overflow-hidden rounded-xl border border-border bg-card lg:block">
+          <div className="hidden overflow-hidden rounded-xl border border-border bg-card shadow-card lg:block">
             <Table>
               <caption className="sr-only">Chemical inventory</caption>
               <TableHeader>
@@ -256,7 +256,7 @@ export function InventoryView() {
                 <button
                   type="button"
                   onClick={() => patch({ id: record.chemical.id })}
-                  className="flex w-full gap-3 rounded-xl border border-border bg-card p-3 text-left"
+                  className="flex w-full gap-3 rounded-xl border border-border bg-card shadow-card p-3 text-left"
                 >
                   <img
                     src={PACKAGING_IMAGE[record.chemical.packaging]}

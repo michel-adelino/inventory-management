@@ -11,11 +11,11 @@ export function HazardChart({ data }: { data: { label: string; count: number }[]
     <div className="h-60">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 8, right: 4, left: -18, bottom: 0 }}>
-          <CartesianGrid vertical={false} stroke="#e6e1d6" />
-          <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fill: "#5f5a53", fontSize: 12 }} />
-          <YAxis allowDecimals={false} tickLine={false} axisLine={false} tick={{ fill: "#5f5a53", fontSize: 12 }} />
+          <CartesianGrid vertical={false} stroke="#e6eaf2" />
+          <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 12 }} />
+          <YAxis allowDecimals={false} tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 12 }} />
           <Tooltip
-            cursor={{ fill: "#f4f1ea" }}
+            cursor={{ fill: "#f5f7fb" }}
             content={({ active, payload, label }) => {
               if (!active || !payload?.length) return null;
               return (
@@ -26,7 +26,7 @@ export function HazardChart({ data }: { data: { label: string; count: number }[]
               );
             }}
           />
-          <Bar dataKey="count" fill="#0f6e56" radius={[4, 4, 0, 0]} maxBarSize={42} />
+          <Bar dataKey="count" fill="#2563eb" radius={[4, 4, 0, 0]} maxBarSize={42} />
         </BarChart>
       </ResponsiveContainer>
     </div>

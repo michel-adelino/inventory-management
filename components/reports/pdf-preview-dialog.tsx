@@ -72,7 +72,7 @@ export function PdfPreviewDialog({
             Download
           </Button>
         </DialogHeader>
-        <div className="min-h-0 flex-1 bg-[#E7E2D8]">
+        <div className="min-h-0 flex-1 bg-[#e8eef6]">
           {status === "loading" ? (
             <p className="px-6 py-16 text-center text-sm text-muted-foreground">Preparing the PDF…</p>
           ) : null}

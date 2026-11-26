@@ -387,7 +387,7 @@ export function AddChemicalDialog({
                       onClick={() => togglePictogram(pictogram)}
                       className={cn(
                         "rounded-full border px-2.5 py-1 text-[12px]",
-                        selected ? "border-primary bg-ok-soft text-primary" : "border-border text-muted-foreground",
+                        selected ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground",
                       )}
                     >
                       {PICTOGRAM_LABEL[pictogram]}
@@ -544,7 +544,7 @@ function FieldHint({ label, text }: { label: string; text: string }) {
                 left: position.left,
                 transform: position.above ? "translateY(-100%)" : undefined,
               }}
-              className="pointer-events-none fixed z-[80] w-64 rounded-md bg-[#1c1915] px-2.5 py-1.5 text-left text-xs leading-5 font-normal text-[#f4f1ea] shadow-lg"
+              className="pointer-events-none fixed z-[80] w-64 rounded-md bg-[#0f172a] px-2.5 py-1.5 text-left text-xs leading-5 font-normal text-[#f8fafc] shadow-lg"
             >
               {text}
             </div>,

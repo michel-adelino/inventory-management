@@ -8,7 +8,7 @@ import type { SdsStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const styles: Record<SdsStatus, string> = {
-  current: "bg-ok-soft text-primary",
+  current: "bg-ok-soft text-ok",
   review: "bg-review-soft text-review",
   outdated: "bg-danger-soft text-destructive",
   missing: "bg-secondary text-foreground",

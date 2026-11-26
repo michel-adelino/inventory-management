@@ -36,12 +36,12 @@ export function SdsDocument({ record }: { record: InventoryRecord }) {
   const pinnedLabel = record.pinned ? `${record.pinned.label}, revised ${formatDate(record.pinned.revisionDate)}` : "no sheet on file";
 
   return (
-    <article className="rounded-xl border border-border bg-card">
+    <article className="rounded-xl border border-border bg-card shadow-card">
       <div className="border-b border-border px-5 py-5 sm:px-6">
-        <p className="text-[11px] font-medium tracking-[0.14em] text-muted-foreground uppercase">Safety data sheet</p>
+        <p className="text-[11px] font-medium tracking-[0.08em] text-muted-foreground uppercase">Safety data sheet</p>
         <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-[24px] leading-tight font-medium tracking-[-0.03em]">{chemical.name}</h2>
+            <h2 className="text-[24px] leading-none font-semibold tracking-[-0.02em]">{chemical.name}</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {chemical.manufacturer} · {facility?.name}
             </p>
@@ -90,19 +90,19 @@ export function SdsDocument({ record }: { record: InventoryRecord }) {
                   {section === 1 ? (
                     <dl className="mt-2 grid gap-2 text-sm sm:grid-cols-2">
                       <div>
-                        <dt className="text-[11px] tracking-[0.12em] text-muted-foreground uppercase">Product</dt>
+                        <dt className="text-[11px] tracking-[0.08em] text-muted-foreground uppercase">Product</dt>
                         <dd>{chemical.name}</dd>
                       </div>
                       <div>
-                        <dt className="text-[11px] tracking-[0.12em] text-muted-foreground uppercase">CAS</dt>
+                        <dt className="text-[11px] tracking-[0.08em] text-muted-foreground uppercase">CAS</dt>
                         <dd className="font-mono">{chemical.cas}</dd>
                       </div>
                       <div>
-                        <dt className="text-[11px] tracking-[0.12em] text-muted-foreground uppercase">Manufacturer</dt>
+                        <dt className="text-[11px] tracking-[0.08em] text-muted-foreground uppercase">Manufacturer</dt>
                         <dd>{chemical.manufacturer}</dd>
                       </div>
                       <div>
-                        <dt className="text-[11px] tracking-[0.12em] text-muted-foreground uppercase">Facility</dt>
+                        <dt className="text-[11px] tracking-[0.08em] text-muted-foreground uppercase">Facility</dt>
                         <dd>{facility?.name}</dd>
                       </div>
                     </dl>
@@ -126,7 +126,7 @@ export function SdsDocument({ record }: { record: InventoryRecord }) {
                     <table className="mt-2 w-full text-sm">
                       <caption className="sr-only">Ingredients</caption>
                       <thead>
-                        <tr className="text-left text-[11px] tracking-[0.12em] text-muted-foreground uppercase">
+                        <tr className="text-left text-[11px] tracking-[0.08em] text-muted-foreground uppercase">
                           <th className="py-1 font-medium">Ingredient</th>
                           <th className="py-1 font-medium">CAS</th>
                           <th className="py-1 text-right font-medium">%</th>

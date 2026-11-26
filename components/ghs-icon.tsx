@@ -18,8 +18,8 @@ const symbols: Record<Pictogram, string> = {
 export function GhsIcon({ name, className }: { name: Pictogram; className?: string }) {
   return (
     <svg viewBox="0 0 64 64" className={cn("size-10 shrink-0", className)} aria-hidden>
-      <path d="M32 4 60 32 32 60 4 32Z" fill="#fff" stroke="#9f1d14" strokeWidth="2.4" />
-      <path d={symbols[name]} fill="#1c1915" />
+      <path d="M32 4 60 32 32 60 4 32Z" fill="#fff" stroke="#dc2626" strokeWidth="2.4" />
+      <path d={symbols[name]} fill="#0f172a" />
     </svg>
   );
 }

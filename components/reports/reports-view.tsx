@@ -93,7 +93,7 @@ export function ReportsView() {
 
       <div className="grid items-start gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
         <form
-          className="no-print space-y-4 rounded-xl border border-border bg-card p-4"
+          className="no-print space-y-4 rounded-xl border border-border bg-card shadow-card p-4"
           onSubmit={(event) => {
             event.preventDefault();
             generate();
@@ -141,7 +141,7 @@ export function ReportsView() {
           <fieldset className="space-y-2">
             <legend className="text-[13px] font-medium">Report</legend>
             {REPORT_TYPES.map((item) => (
-              <label key={item.id} className="flex cursor-pointer gap-2 rounded-md border border-border px-3 py-2 text-sm has-[:checked]:border-primary has-[:checked]:bg-ok-soft">
+              <label key={item.id} className="flex cursor-pointer gap-2 rounded-md border border-border px-3 py-2 text-sm has-[:checked]:border-primary has-[:checked]:bg-primary/10">
                 <input
                   type="radio"
                   name="report-type"
@@ -182,14 +182,14 @@ export function ReportsView() {
           </div>
         </form>
 
-        <article className="report-sheet overflow-hidden rounded-xl border border-border bg-white">
+        <article className="report-sheet overflow-hidden rounded-xl border border-border bg-white shadow-card">
           <div className="relative h-28">
             <img src={facility.image} alt="" className="h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-[#1c1915]/55" />
+            <div className="absolute inset-0 bg-[#0f172a]/55" />
             <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 px-5 py-3 text-white sm:px-6">
               <div>
-                <p className="text-[11px] tracking-[0.16em] text-white/75 uppercase">Sample excerpt</p>
-                <p className="text-lg font-medium">{heading}</p>
+                <p className="text-[11px] tracking-[0.08em] text-white/75 uppercase">Sample excerpt</p>
+                <p className="text-lg font-semibold">{heading}</p>
               </div>
               <p className="font-mono text-[11px] sm:text-xs">{facility.epaId}</p>
             </div>
@@ -197,7 +197,7 @@ export function ReportsView() {
           <div className="px-5 py-5 sm:px-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <h2 className="text-[22px] font-medium tracking-[-0.03em]">{table.title}</h2>
+                <h2 className="text-[22px] font-semibold tracking-[-0.02em]">{table.title}</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {customer?.name}
                   {state.facilityId === "all" ? "" : ` · ${facility.address}`}
@@ -205,11 +205,11 @@ export function ReportsView() {
               </div>
               <dl className="text-sm sm:text-right">
                 <div>
-                  <dt className="text-[11px] tracking-[0.12em] text-muted-foreground uppercase">Reporting year</dt>
+                  <dt className="text-[11px] tracking-[0.08em] text-muted-foreground uppercase">Reporting year</dt>
                   <dd className="font-mono">{yearLabel}</dd>
                 </div>
                 <div className="mt-2">
-                  <dt className="text-[11px] tracking-[0.12em] text-muted-foreground uppercase">Generated</dt>
+                  <dt className="text-[11px] tracking-[0.08em] text-muted-foreground uppercase">Generated</dt>
                   <dd className="font-mono text-[12px]">
                     {generatedLabel}
                   </dd>
@@ -226,7 +226,7 @@ export function ReportsView() {
                 <table className="w-full min-w-[640px] text-left text-[13px]">
                   <caption className="sr-only">{table.title}</caption>
                   <thead>
-                    <tr className="border-b border-[#1c1915] text-[11px] tracking-[0.12em] text-muted-foreground uppercase">
+                    <tr className="border-b border-foreground text-[11px] tracking-[0.08em] text-muted-foreground uppercase">
                       {table.columns.map((column) => (
                         <th key={column} className="py-2 pr-3 font-medium">
                           {column}

@@ -17,7 +17,7 @@ export function SheetContent({
 }: ComponentProps<typeof DialogPrimitive.Content> & { side?: "left" | "right" }) {
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[#1c1915]/40" />
+      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[#0f172a]/40" />
       <DialogPrimitive.Content
         className={cn(
           "fixed z-50 flex h-full flex-col bg-card shadow-xl outline-none",
@@ -28,7 +28,7 @@ export function SheetContent({
         {...props}
       >
         {children}
-        <DialogPrimitive.Close className="absolute top-3.5 right-3.5 rounded-md p-1 text-current opacity-70 hover:opacity-100">
+        <DialogPrimitive.Close className="absolute top-3 right-3 z-10 rounded-md border border-border bg-card p-1.5 text-foreground shadow-sm hover:bg-secondary">
           <X className="size-4" />
           <span className="sr-only">Close</span>
         </DialogPrimitive.Close>
