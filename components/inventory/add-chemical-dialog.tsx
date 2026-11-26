@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useState, type ComponentProps, type FormEvent, type ReactNode } from "react";
+import { CircleHelp } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -221,7 +222,11 @@ export function AddChemicalDialog({
                   aria-invalid={Boolean(errors.manufacturer)}
                 />
               </Field>
-              <Field label="CAS" error={errors.cas}>
+              <Field
+                label="CAS"
+                hint="The number on the product label or SDS, written like 67-64-1. Type mixture when the product has no single number."
+                error={errors.cas}
+              >
                 <Input value={cas} onChange={(event) => setCas(event.target.value)} className="font-mono" aria-invalid={Boolean(errors.cas)} />
               </Field>
               <Field label="Facility">
@@ -238,7 +243,7 @@ export function AddChemicalDialog({
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Year">
+              <Field label="Year" hint="The inventory year this line belongs to. Another year can keep its own quantity and its own SDS.">
                 <Select value={year} onValueChange={setYear}>
                   <SelectTrigger>
                     <SelectValue />
@@ -252,7 +257,7 @@ export function AddChemicalDialog({
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Hazard class">
+              <Field label="Hazard class" hint="The main hazard named on the SDS, such as flammable liquid or corrosive.">
                 <Select value={hazardClass} onValueChange={(value) => setHazardClass(value as HazardClass)}>
                   <SelectTrigger>
                     <SelectValue />
@@ -266,7 +271,7 @@ export function AddChemicalDialog({
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Signal word">
+              <Field label="Signal word" hint="The word printed on the SDS. Danger is the more severe choice. Warning is the less severe one.">
                 <Select value={signalWord} onValueChange={(value) => setSignalWord(value as SignalWord)}>
                   <SelectTrigger>
                     <SelectValue />
@@ -277,7 +282,7 @@ export function AddChemicalDialog({
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Physical state">
+              <Field label="Physical state" hint="How the product is stored: liquid, solid, or gas.">
                 <Select value={physicalState} onValueChange={(value) => setPhysicalState(value as PhysicalState)}>
                   <SelectTrigger>
                     <SelectValue />
@@ -289,7 +294,7 @@ export function AddChemicalDialog({
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Packaging">
+              <Field label="Packaging" hint="The container it is stored in, such as a drum, bottle, or cylinder.">
                 <Select value={packaging} onValueChange={(value) => setPackaging(value as Packaging)}>
                   <SelectTrigger>
                     <SelectValue />
@@ -303,7 +308,7 @@ export function AddChemicalDialog({
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Unit">
+              <Field label="Unit" hint="The measurement for container size and the on-hand total: liters, kilograms, or gallons.">
                 <Select value={unit} onValueChange={(value) => setUnit(value as Unit)}>
                   <SelectTrigger>
                     <SelectValue />
@@ -315,32 +320,44 @@ export function AddChemicalDialog({
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Container size" error={errors.containerSize}>
-                <Input
-                  inputMode="decimal"
+              <Field
+                label="Container size"
+                hint="How much one container holds, in the unit above. A 200 L drum is 200."
+                error={errors.containerSize}
+              >
+                <NumericInput
                   value={containerSize}
-                  onChange={(event) => setContainerSize(event.target.value)}
+                  onValueChange={setContainerSize}
                   aria-invalid={Boolean(errors.containerSize)}
                 />
               </Field>
-              <Field label="Container count" error={errors.containerCount}>
-                <Input
-                  inputMode="numeric"
+              <Field
+                label="Container count"
+                hint="How many of those containers are in this location. Use a whole number."
+                error={errors.containerCount}
+              >
+                <NumericInput
+                  integer
                   value={containerCount}
-                  onChange={(event) => setContainerCount(event.target.value)}
+                  onValueChange={setContainerCount}
                   aria-invalid={Boolean(errors.containerCount)}
                 />
               </Field>
-              <Field label="On hand">
+              <Field label="On hand" hint="Calculated for you: container size times the number of containers.">
                 <Input readOnly value={`${primaryTotal + extraTotal} ${unit}`} />
               </Field>
-              <Field label="Reorder point">
-                <Input inputMode="decimal" value={reorderPoint} onChange={(event) => setReorderPoint(event.target.value)} placeholder="Optional" />
+              <Field
+                label="Reorder point"
+                hint="Optional. The dashboard flags this line when the on-hand total falls below this amount."
+              >
+                <NumericInput value={reorderPoint} onValueChange={setReorderPoint} placeholder="Optional" />
               </Field>
             </div>
 
             <fieldset>
-              <legend className="text-[13px] font-medium">Storage location</legend>
+              <SectionTitle hint="Where the containers are kept. Include the building, the room, and the cabinet or bay.">
+                Storage location
+              </SectionTitle>
               <div className="mt-2 grid gap-3 sm:grid-cols-3">
                 <Input value={building} onChange={(event) => setBuilding(event.target.value)} placeholder="Building" aria-label="Building" />
                 <Input value={room} onChange={(event) => setRoom(event.target.value)} placeholder="Room" aria-label="Room" />
@@ -355,7 +372,9 @@ export function AddChemicalDialog({
             </fieldset>
 
             <fieldset>
-              <legend className="text-[13px] font-medium">Pictograms</legend>
+              <SectionTitle hint="The diamond hazard symbols on the label. Select each one printed on the SDS.">
+                Pictograms
+              </SectionTitle>
               <div className="mt-2 flex flex-wrap gap-2">
                 {PICTOGRAMS.map((pictogram) => {
                   const selected = pictograms.includes(pictogram);
@@ -379,7 +398,9 @@ export function AddChemicalDialog({
             </fieldset>
 
             <fieldset className="space-y-3">
-              <legend className="text-[13px] font-medium">Ingredients</legend>
+              <SectionTitle hint="Each substance in the product: its name, its CAS number, and its percent. The percents should add up to about 100.">
+                Ingredients
+              </SectionTitle>
               {ingredients.map((ingredient, index) => (
                 <div key={index} className="grid gap-2 sm:grid-cols-[1fr_140px_90px]">
                   <Input
@@ -397,11 +418,10 @@ export function AddChemicalDialog({
                     aria-label={`Ingredient ${index + 1} CAS`}
                     aria-invalid={Boolean(errors[`ingredient-cas-${index}`])}
                   />
-                  <Input
+                  <NumericInput
                     value={ingredient.percent}
-                    onChange={(event) => updateIngredient(index, "percent", event.target.value)}
+                    onValueChange={(value) => updateIngredient(index, "percent", value)}
                     placeholder="%"
-                    inputMode="decimal"
                     aria-label={`Ingredient ${index + 1} percent`}
                     aria-invalid={Boolean(errors[`ingredient-percent-${index}`])}
                   />
@@ -418,7 +438,11 @@ export function AddChemicalDialog({
               </Button>
             </fieldset>
 
-            <Field label="SDS revision date" error={errors.revisionDate}>
+            <Field
+              label="SDS revision date"
+              hint="The date printed on the safety data sheet. A date about four years old falls in the review window."
+              error={errors.revisionDate}
+            >
               <Input
                 type="date"
                 max={todayIso()}
@@ -443,12 +467,86 @@ export function AddChemicalDialog({
   );
 }
 
-function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
+function keepDecimal(value: string) {
+  const cleaned = value.replace(/[^\d.]/g, "");
+  const dot = cleaned.indexOf(".");
+  if (dot === -1) return cleaned;
+  return `${cleaned.slice(0, dot + 1)}${cleaned.slice(dot + 1).replace(/\./g, "")}`;
+}
+
+function keepInteger(value: string) {
+  return value.replace(/\D/g, "");
+}
+
+function NumericInput({
+  integer = false,
+  value,
+  onValueChange,
+  ...props
+}: { integer?: boolean; value: string; onValueChange: (value: string) => void } & Omit<
+  ComponentProps<"input">,
+  "value" | "onChange" | "type"
+>) {
+  return (
+    <Input
+      type="number"
+      inputMode={integer ? "numeric" : "decimal"}
+      min={0}
+      step={integer ? 1 : "any"}
+      value={value}
+      onChange={(event) => onValueChange(integer ? keepInteger(event.target.value) : keepDecimal(event.target.value))}
+      onWheel={(event) => event.currentTarget.blur()}
+      {...props}
+    />
+  );
+}
+
+function FieldHint({ label, text }: { label: string; text: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        className="rounded-full text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/30"
+        aria-label={`About ${label}`}
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <CircleHelp className="size-3.5" />
+      </button>
+      {open ? <p className="w-full text-[12px] leading-5 font-normal text-muted-foreground">{text}</p> : null}
+    </>
+  );
+}
+
+function Field({
+  label,
+  hint,
+  error,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  error?: string;
+  children: ReactNode;
+}) {
   return (
     <div className="space-y-1.5">
-      <Label>{label}</Label>
+      <div className="flex flex-wrap items-center gap-1.5">
+        <Label>{label}</Label>
+        {hint ? <FieldHint label={label} text={hint} /> : null}
+      </div>
       {children}
       {error ? <p className="text-xs text-destructive">{error}</p> : null}
     </div>
+  );
+}
+
+function SectionTitle({ hint, children }: { hint: string; children: string }) {
+  return (
+    <legend className="flex flex-wrap items-center gap-1.5 text-[13px] font-medium">
+      {children}
+      <FieldHint label={children} text={hint} />
+    </legend>
   );
 }

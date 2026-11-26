@@ -1,9 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Download, Printer } from "lucide-react";
+import { Download, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
+import { PdfPreviewDialog } from "@/components/reports/pdf-preview-dialog";
+import type { ReportPdfModel } from "@/components/reports/report-pdf";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -24,6 +26,7 @@ export function ReportsView() {
   const [type, setType] = useState<ReportType>("hazmat");
   const [generatedType, setGeneratedType] = useState<ReportType>("hazmat");
   const [generatedAt, setGeneratedAt] = useState(() => new Date());
+  const [pdfOpen, setPdfOpen] = useState(false);
 
   const customer = customers.find((item) => item.id === state.customerId);
   const customerFacilities = facilities.filter((item) => item.customerId === state.customerId);
@@ -33,6 +36,8 @@ export function ReportsView() {
   const yearLabel = state.year === "all" ? "All years" : String(state.year);
 
   const table = useMemo(() => buildReport(generatedType, scoped), [generatedType, scoped]);
+
+  const scopeName = state.facilityId === "all" ? customer?.shortName ?? "customer" : facility.shortName;
 
   function generate() {
     setGeneratedType(type);
@@ -46,7 +51,6 @@ export function ReportsView() {
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    const scopeName = state.facilityId === "all" ? customer?.shortName ?? "customer" : facility.shortName;
     const name = `${slugify(scopeName)}-${generatedType}-${state.year}.csv`;
     link.href = url;
     link.download = name;
@@ -57,12 +61,34 @@ export function ReportsView() {
 
   const meta = REPORT_TYPES.find((item) => item.id === generatedType);
   const heading = state.facilityId === "all" ? `${customer?.name ?? "Customer"} · all facilities` : facility.name;
+  const generatedLabel = generatedAt.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  const pdfModel = useMemo<ReportPdfModel>(
+    () => ({
+      title: table.title,
+      intro: table.intro,
+      columns: table.columns,
+      rows: table.rows,
+      customerName: customer?.name ?? "Customer",
+      facilityName: heading,
+      address: state.facilityId === "all" ? "" : facility.address,
+      epaId: state.facilityId === "all" ? "" : facility.epaId,
+      yearLabel,
+      generatedLabel,
+    }),
+    [table, customer?.name, heading, state.facilityId, facility.address, facility.epaId, yearLabel, generatedLabel],
+  );
 
   return (
     <div className="space-y-5">
       <PageHeader
         title="Regulatory reporting"
-        description="Sample excerpts from the same inventory lines. Print or download the preview. Nothing here is an official EPA or OSHA filing."
+        description="Sample excerpts from the same inventory lines. Export a PDF or CSV of the preview. Nothing here is an official EPA or OSHA filing."
       />
 
       <div className="grid items-start gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
@@ -143,13 +169,13 @@ export function ReportsView() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem onSelect={() => window.print()}>
-                  <Printer className="size-4" />
-                  Print
+                <DropdownMenuItem onSelect={() => setPdfOpen(true)}>
+                  <FileText className="size-4" />
+                  PDF
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={download}>
                   <Download className="size-4" />
-                  Download CSV
+                  CSV
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -185,7 +211,7 @@ export function ReportsView() {
                 <div className="mt-2">
                   <dt className="text-[11px] tracking-[0.12em] text-muted-foreground uppercase">Generated</dt>
                   <dd className="font-mono text-[12px]">
-                    {generatedAt.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
+                    {generatedLabel}
                   </dd>
                 </div>
               </dl>
@@ -235,6 +261,12 @@ export function ReportsView() {
           </div>
         </article>
       </div>
+      <PdfPreviewDialog
+        open={pdfOpen}
+        onOpenChange={setPdfOpen}
+        model={pdfModel}
+        fileName={`${slugify(scopeName)}-${generatedType}-${state.year}.pdf`}
+      />
     </div>
   );
 }
