@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type ComponentProps, type FormEvent, type ReactNode } from "react";
+import { useRef, useState, type ComponentProps, type FormEvent, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { CircleHelp } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -502,19 +503,54 @@ function NumericInput({
 }
 
 function FieldHint({ label, text }: { label: string; text: string }) {
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState({ top: 0, left: 0, above: true });
+
+  function show() {
+    const rect = buttonRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const width = 256;
+    const margin = 12;
+    const above = rect.top > 96;
+    const left = Math.min(window.innerWidth - width - margin, Math.max(margin, rect.left));
+    setPosition({ top: above ? rect.top - 8 : rect.bottom + 8, left, above });
+    setOpen(true);
+  }
+
   return (
     <>
       <button
+        ref={buttonRef}
         type="button"
-        className="rounded-full text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/30"
+        className="inline-flex rounded-full text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/30"
         aria-label={`About ${label}`}
         aria-expanded={open}
-        onClick={() => setOpen((current) => !current)}
+        onMouseEnter={show}
+        onMouseLeave={() => {
+          if (document.activeElement !== buttonRef.current) setOpen(false);
+        }}
+        onFocus={show}
+        onBlur={() => setOpen(false)}
       >
         <CircleHelp className="size-3.5" />
       </button>
-      {open ? <p className="w-full text-[12px] leading-5 font-normal text-muted-foreground">{text}</p> : null}
+      {open
+        ? createPortal(
+            <div
+              role="tooltip"
+              style={{
+                top: position.top,
+                left: position.left,
+                transform: position.above ? "translateY(-100%)" : undefined,
+              }}
+              className="pointer-events-none fixed z-[80] w-64 rounded-md bg-[#1c1915] px-2.5 py-1.5 text-left text-xs leading-5 font-normal text-[#f4f1ea] shadow-lg"
+            >
+              {text}
+            </div>,
+            document.body,
+          )
+        : null}
     </>
   );
 }
@@ -532,7 +568,7 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <div className="flex flex-wrap items-center gap-1.5">
+      <div className="flex items-center gap-1.5">
         <Label>{label}</Label>
         {hint ? <FieldHint label={label} text={hint} /> : null}
       </div>
@@ -544,7 +580,7 @@ function Field({
 
 function SectionTitle({ hint, children }: { hint: string; children: string }) {
   return (
-    <legend className="flex flex-wrap items-center gap-1.5 text-[13px] font-medium">
+    <legend className="flex items-center gap-1.5 text-[13px] font-medium">
       {children}
       <FieldHint label={children} text={hint} />
     </legend>
