@@ -16,7 +16,7 @@ import { cn, formatDate } from "@/lib/utils";
 export function SdsView() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { scoped } = useStore();
+  const { scoped, state } = useStore();
   const [isLarge, setIsLarge] = useState<boolean | null>(null);
   const query = searchParams.get("q") ?? "";
   const status = searchParams.get("status") ?? "all";
@@ -57,12 +57,16 @@ export function SdsView() {
       ) ?? null)
     : null;
   const desktopRecord = explicit ?? filtered[0] ?? null;
+  const facility = facilities.find((item) => item.id === state.facilityId);
+  const yearLabel = state.year === "all" ? "All years" : String(state.year);
+  const scopeLabel = facility ? facility.shortName : "All facilities";
 
   return (
     <div className="space-y-5">
       <PageHeader
+        eyebrow={`${scopeLabel} · ${yearLabel}`}
         title="Safety data sheets"
-        description="Each inventory year keeps the SDS version it was filed with. The five-year mark is a proposed review rule, not a regulatory expiration."
+        description="Each inventory year keeps the SDS version filed with that year."
       />
 
       <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_200px]">

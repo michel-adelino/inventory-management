@@ -88,7 +88,7 @@ export function ReportsView() {
     <div className="space-y-5">
       <PageHeader
         title="Regulatory reporting"
-        description="Sample excerpts from the same inventory lines. Export a PDF or CSV of the preview. Nothing here is an official EPA or OSHA filing."
+        description="Filing preview for this facility and year. Export a PDF or CSV. Not an official EPA or OSHA filing."
       />
 
       <div className="grid items-start gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
@@ -188,7 +188,7 @@ export function ReportsView() {
             <div className="absolute inset-0 bg-[#0f172a]/55" />
             <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 px-5 py-3 text-white sm:px-6">
               <div>
-                <p className="text-[11px] tracking-[0.08em] text-white/75 uppercase">Sample excerpt</p>
+                <p className="text-[11px] tracking-[0.08em] text-white/75 uppercase">{yearLabel}</p>
                 <p className="text-lg font-semibold">{heading}</p>
               </div>
               <p className="font-mono text-[11px] sm:text-xs">{facility.epaId}</p>

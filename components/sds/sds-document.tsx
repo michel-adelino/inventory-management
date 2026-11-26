@@ -37,22 +37,33 @@ export function SdsDocument({ record }: { record: InventoryRecord }) {
 
   return (
     <article className="rounded-xl border border-border bg-card shadow-card">
-      <div className="border-b border-border px-5 py-5 sm:px-6">
-        <p className="text-[11px] font-medium tracking-[0.08em] text-muted-foreground uppercase">Safety data sheet</p>
-        <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2 className="text-[24px] leading-none font-semibold tracking-[-0.02em]">{chemical.name}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
+      <header className="border-b border-border px-5 py-5 sm:px-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium tracking-[0.08em] text-muted-foreground uppercase">
+              Safety data sheet · {chemical.year}
+            </p>
+            <h2 className="mt-2 text-[24px] leading-none font-semibold tracking-[-0.02em]">{chemical.name}</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
               {chemical.manufacturer} · {facility?.name}
             </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {record.pinned ? `${record.pinned.label} · revised ${formatDate(record.pinned.revisionDate)}` : "No sheet on file"}
+            </p>
           </div>
-          <StatusBadge status={record.status} revisionDate={record.pinned?.revisionDate ?? ""} reviseBy={record.reviseBy} />
+          <div className="flex flex-col items-start gap-3 sm:items-end">
+            <StatusBadge status={record.status} revisionDate={record.pinned?.revisionDate ?? ""} reviseBy={record.reviseBy} />
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" onClick={() => setOpen(true)}>
+                {record.document ? "Add revision" : "Add SDS"}
+              </Button>
+              <Button size="sm" variant="outline" asChild>
+                <Link href={`/inventory?id=${chemical.id}`}>View in inventory</Link>
+              </Button>
+            </div>
+          </div>
         </div>
-        {record.status === "current" ? (
-          <p className="mt-4 text-sm text-muted-foreground">
-            {detail} This {chemical.year} line uses {pinnedLabel}.
-          </p>
-        ) : (
+        {record.status === "current" ? null : (
           <div
             className={
               record.status === "outdated"
@@ -68,15 +79,7 @@ export function SdsDocument({ record }: { record: InventoryRecord }) {
             </p>
           </div>
         )}
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Button size="sm" onClick={() => setOpen(true)}>
-            {record.document ? "Add revision" : "Add SDS"}
-          </Button>
-          <Button size="sm" variant="outline" asChild>
-            <Link href={`/inventory?id=${chemical.id}`}>View in inventory</Link>
-          </Button>
-        </div>
-      </div>
+      </header>
 
       <ol className="divide-y divide-border">
         {SDS_SECTIONS.map((title, index) => {

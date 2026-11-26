@@ -60,6 +60,9 @@ export function InventoryView() {
 
   const selected = records.find((record) => record.chemical.id === selectedId) ?? null;
   const editing = records.find((record) => record.chemical.id === editingId) ?? null;
+  const facility = facilities.find((item) => item.id === state.facilityId);
+  const yearLabel = state.year === "all" ? "All years" : String(state.year);
+  const scopeLabel = facility ? facility.shortName : "All facilities";
 
   function toggleSort(key: SortKey) {
     setSort((current) =>
@@ -70,8 +73,9 @@ export function InventoryView() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Chemical inventory"
-        description="Container size times count is the on-hand quantity. Facility and year follow the controls at the top of the screen."
+        eyebrow={`${scopeLabel} · ${yearLabel}`}
+        title="Inventory"
+        description="On hand is container size times the number of containers."
         action={
           <Button onClick={() => setAdding(true)}>
             <Plus className="size-4" />
@@ -183,7 +187,7 @@ export function InventoryView() {
                     <SortButton label="Product" active={sort.key === "name"} dir={sort.dir} onClick={() => toggleSort("name")} />
                   </TableHead>
                   <TableHead>CAS</TableHead>
-                  <TableHead>Facility</TableHead>
+                  {state.facilityId === "all" ? <TableHead>Facility</TableHead> : null}
                   <TableHead>
                     <SortButton label="Year" active={sort.key === "year"} dir={sort.dir} onClick={() => toggleSort("year")} />
                   </TableHead>
@@ -227,7 +231,7 @@ export function InventoryView() {
                         </span>
                       </TableCell>
                       <TableCell className="font-mono text-[13px]">{record.chemical.cas}</TableCell>
-                      <TableCell>{facility?.shortName}</TableCell>
+                      {state.facilityId === "all" ? <TableCell>{facility?.shortName}</TableCell> : null}
                       <TableCell className="font-mono">{record.chemical.year}</TableCell>
                       <TableCell className="font-mono text-[13px] tabular-nums">
                         {formatNumber(totalQuantity(record.chemical))} {record.chemical.unit}
@@ -266,6 +270,9 @@ export function InventoryView() {
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium">{record.chemical.name}</span>
                     <span className="mt-0.5 block font-mono text-[12px] text-muted-foreground">{record.chemical.cas}</span>
+                    <span className="mt-0.5 block truncate text-[12px] text-muted-foreground">
+                      {locationLabel(record.chemical.locations[0])}
+                    </span>
                     <span className="mt-2 flex items-center justify-between gap-2">
                       <span className="font-mono text-[13px]">
                         {formatNumber(totalQuantity(record.chemical))} {record.chemical.unit}

@@ -11,6 +11,8 @@ export const metadata: Metadata = {
     template: "%s · Northline",
   },
   description: "Chemical inventory, safety data sheets, and regulatory reporting.",
+  authors: [{ name: "Ray Studer" }],
+  creator: "Ray Studer",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

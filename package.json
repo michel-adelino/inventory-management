@@ -2,6 +2,8 @@
   "name": "inventory-management",
   "private": true,
   "version": "0.1.0",
+  "description": "Chemical inventory, safety data sheets, and regulatory reporting.",
+  "author": "Ray Studer",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

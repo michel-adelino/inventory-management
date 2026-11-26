@@ -59,16 +59,16 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-function WorkspaceMark() {
+function WorkspaceMark({ customer }: { customer: string }) {
   return (
     <div className="mt-auto border-t border-border px-4 py-4">
       <div className="flex items-center gap-3">
         <span className="grid size-8 place-items-center rounded-full bg-primary/10 text-[11px] font-medium text-primary">
           EH
         </span>
-        <div>
+        <div className="min-w-0">
           <p className="text-[13px] font-medium text-foreground">Plant EHS</p>
-          <p className="text-[11px] text-muted-foreground">Sample workspace</p>
+          <p className="truncate text-[11px] text-muted-foreground">{customer}</p>
         </div>
       </div>
     </div>
@@ -232,6 +232,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { state, setCustomer, setFacility, setYear } = useStore();
   const customerFacilities = facilities.filter((facility) => facility.customerId === state.customerId);
+  const customerName = customers.find((customer) => customer.id === state.customerId)?.name ?? "Plant EHS";
 
   return (
     <div className="flex min-h-screen">
@@ -244,7 +245,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="app-sidebar no-print sticky top-0 hidden h-screen w-[240px] shrink-0 flex-col border-r border-border bg-card lg:flex">
         <Brand />
         <NavLinks />
-        <WorkspaceMark />
+        <WorkspaceMark customer={customerName} />
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="app-topbar no-print sticky top-0 z-30 flex flex-col gap-2 border-b border-border bg-card/95 px-3 py-2 backdrop-blur sm:px-6 lg:h-14 lg:flex-row lg:items-center lg:gap-3 lg:py-0">
@@ -310,7 +311,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <SheetTitle className="sr-only">Menu</SheetTitle>
           <Brand />
           <NavLinks onNavigate={() => setMenuOpen(false)} />
-          <WorkspaceMark />
+          <WorkspaceMark customer={customerName} />
         </SheetContent>
       </Sheet>
     </div>
